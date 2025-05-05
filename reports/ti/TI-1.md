@@ -62,14 +62,14 @@ def test_transport_protocol_methods():
     assert hasattr(Transport, 'receive')
     assert hasattr(Transport, '__aenter__')
     assert hasattr(Transport, '__aexit__')
-    
+
     # Check method signatures
     assert inspect.iscoroutinefunction(Transport.connect)
     assert inspect.iscoroutinefunction(Transport.disconnect)
     assert inspect.iscoroutinefunction(Transport.send)
     assert inspect.iscoroutinefunction(Transport.__aenter__)
     assert inspect.iscoroutinefunction(Transport.__aexit__)
-    
+
     # Check return type annotations
     assert Transport.connect.__annotations__.get('return') == None
     assert Transport.disconnect.__annotations__.get('return') == None
@@ -81,20 +81,20 @@ def test_transport_protocol_methods():
 class MockTransport:
     async def connect(self) -> None:
         pass
-        
+
     async def disconnect(self) -> None:
         pass
-        
+
     async def send(self, message) -> None:
         pass
-        
+
     async def receive(self):
         yield b"test"
-        
+
     async def __aenter__(self):
         await self.connect()
         return self
-        
+
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await self.disconnect()
 
@@ -102,7 +102,7 @@ class MockTransport:
 async def test_transport_implementation():
     """Test that a concrete implementation works with the protocol."""
     transport = MockTransport()
-    
+
     # Test async context manager
     async with transport as t:
         await t.send("test")
@@ -121,13 +121,13 @@ def test_message_protocol_methods():
     assert hasattr(Message, 'deserialize')
     assert hasattr(Message, 'get_headers')
     assert hasattr(Message, 'get_payload')
-    
+
     # Check method signatures
     assert not inspect.iscoroutinefunction(Message.serialize)
     assert not inspect.iscoroutinefunction(Message.deserialize)
     assert not inspect.iscoroutinefunction(Message.get_headers)
     assert not inspect.iscoroutinefunction(Message.get_payload)
-    
+
     # Check return type annotations
     assert Message.serialize.__annotations__.get('return') == bytes
     assert 'Dict' in str(Message.get_headers.__annotations__.get('return'))
@@ -137,28 +137,28 @@ class MockMessage:
     def __init__(self, headers, payload):
         self.headers = headers
         self.payload = payload
-        
+
     def serialize(self) -> bytes:
         return b"test"
-        
+
     @classmethod
     def deserialize(cls, data: bytes) -> 'MockMessage':
         return cls({}, "test")
-        
+
     def get_headers(self):
         return self.headers
-        
+
     def get_payload(self):
         return self.payload
 
 def test_message_implementation():
     """Test that a concrete implementation works with the protocol."""
     message = MockMessage({"content-type": "text/plain"}, "Hello, world!")
-    
+
     assert message.serialize() == b"test"
     assert message.get_headers() == {"content-type": "text/plain"}
     assert message.get_payload() == "Hello, world!"
-    
+
     deserialized = MockMessage.deserialize(b"test")
     assert isinstance(deserialized, MockMessage)
 ```
@@ -190,11 +190,11 @@ def test_error_hierarchy():
     assert issubclass(SerializationError, MessageError)
     assert issubclass(DeserializationError, MessageError)
     assert issubclass(TransportSpecificError, TransportError)
-    
+
     # Test instantiation
     error = TransportError("Test error")
     assert str(error) == "Test error"
-    
+
     # Test specific error types
     timeout_error = ConnectionTimeoutError("Connection timed out")
     assert isinstance(timeout_error, ConnectionError)
@@ -209,7 +209,7 @@ def test_error_handling():
         assert "timed out" in str(e)
     except TransportError:
         pytest.fail("ConnectionTimeoutError should be caught by ConnectionError")
-        
+
     try:
         raise SerializationError("Failed to serialize message")
     except MessageError as e:
@@ -232,9 +232,9 @@ def test_json_message_init():
     """Test JsonMessage initialization."""
     headers = {"content-type": "application/json"}
     payload = {"name": "test", "value": 123}
-    
+
     message = JsonMessage(headers, payload)
-    
+
     assert message.headers == headers
     assert message.payload == payload
     assert message.content_type == "application/json"
@@ -243,13 +243,13 @@ def test_json_message_serialize():
     """Test JsonMessage serialization."""
     headers = {"content-type": "application/json"}
     payload = {"name": "test", "value": 123}
-    
+
     message = JsonMessage(headers, payload)
     serialized = message.serialize()
-    
+
     # Verify it's bytes
     assert isinstance(serialized, bytes)
-    
+
     # Verify content
     deserialized = json.loads(serialized.decode('utf-8'))
     assert deserialized["headers"] == headers
@@ -260,9 +260,9 @@ def test_json_message_deserialize():
     headers = {"content-type": "application/json"}
     payload = {"name": "test", "value": 123}
     data = json.dumps({"headers": headers, "payload": payload}).encode('utf-8')
-    
+
     message = JsonMessage.deserialize(data)
-    
+
     assert message.headers == headers
     assert message.payload == payload
 
@@ -272,9 +272,9 @@ def test_json_message_serialize_error():
     headers = {"content-type": "application/json"}
     payload = {"circular": None}
     payload["circular"] = payload  # Create circular reference
-    
+
     message = JsonMessage(headers, payload)
-    
+
     with pytest.raises(SerializationError):
         message.serialize()
 
@@ -282,7 +282,7 @@ def test_json_message_deserialize_error():
     """Test JsonMessage deserialization error."""
     # Invalid JSON data
     data = b"not valid json"
-    
+
     with pytest.raises(DeserializationError):
         JsonMessage.deserialize(data)
 
@@ -290,9 +290,9 @@ def test_json_message_get_methods():
     """Test JsonMessage get_headers and get_payload methods."""
     headers = {"content-type": "application/json"}
     payload = {"name": "test", "value": 123}
-    
+
     message = JsonMessage(headers, payload)
-    
+
     assert message.get_headers() == headers
     assert message.get_payload() == payload
 ```
@@ -309,9 +309,9 @@ def test_binary_message_init():
     """Test BinaryMessage initialization."""
     headers = {"content-type": "application/octet-stream"}
     payload = b"binary data"
-    
+
     message = BinaryMessage(headers, payload)
-    
+
     assert message.headers == headers
     assert message.payload == payload
     assert message.content_type == "application/octet-stream"
@@ -320,18 +320,18 @@ def test_binary_message_serialize():
     """Test BinaryMessage serialization."""
     headers = {"content-type": "application/octet-stream"}
     payload = b"binary data"
-    
+
     message = BinaryMessage(headers, payload)
     serialized = message.serialize()
-    
+
     # Verify it's bytes
     assert isinstance(serialized, bytes)
-    
+
     # Verify format: 4-byte header length + header JSON + payload
     header_len = int.from_bytes(serialized[:4], byteorder='big')
     header_json = serialized[4:4+header_len]
     message_payload = serialized[4+header_len:]
-    
+
     deserialized_headers = json.loads(header_json.decode('utf-8'))
     assert deserialized_headers == headers
     assert message_payload == payload
@@ -340,14 +340,14 @@ def test_binary_message_deserialize():
     """Test BinaryMessage deserialization."""
     headers = {"content-type": "application/octet-stream"}
     payload = b"binary data"
-    
+
     # Create serialized data
     header_json = json.dumps(headers).encode('utf-8')
     header_len = len(header_json)
     data = header_len.to_bytes(4, byteorder='big') + header_json + payload
-    
+
     message = BinaryMessage.deserialize(data)
-    
+
     assert message.headers == headers
     assert message.payload == payload
 
@@ -357,25 +357,25 @@ def test_binary_message_serialize_error():
     headers = {"circular": None}
     headers["circular"] = headers  # Create circular reference
     payload = b"binary data"
-    
+
     message = BinaryMessage(headers, payload)
-    
+
     with pytest.raises(SerializationError):
         message.serialize()
 
 def test_binary_message_deserialize_error():
     """Test BinaryMessage deserialization error."""
     # Test cases for deserialization errors
-    
+
     # 1. Message too short
     with pytest.raises(DeserializationError, match="too short"):
         BinaryMessage.deserialize(b"123")
-        
+
     # 2. Message truncated
     header_len = (1000).to_bytes(4, byteorder='big')
     with pytest.raises(DeserializationError, match="truncated"):
         BinaryMessage.deserialize(header_len + b"short")
-        
+
     # 3. Invalid header JSON
     header_len = (5).to_bytes(4, byteorder='big')
     with pytest.raises(DeserializationError, match="Invalid"):
@@ -385,9 +385,9 @@ def test_binary_message_get_methods():
     """Test BinaryMessage get_headers and get_payload methods."""
     headers = {"content-type": "application/octet-stream"}
     payload = b"binary data"
-    
+
     message = BinaryMessage(headers, payload)
-    
+
     assert message.get_headers() == headers
     assert message.get_payload() == payload
 ```
@@ -406,23 +406,23 @@ class MockTransport:
         self.host = host
         self.port = port
         self.options = kwargs
-        
+
     async def connect(self) -> None:
         pass
-        
+
     async def disconnect(self) -> None:
         pass
-        
+
     async def send(self, message) -> None:
         pass
-        
+
     async def receive(self):
         yield b"test"
-        
+
     async def __aenter__(self):
         await self.connect()
         return self
-        
+
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await self.disconnect()
 
@@ -430,14 +430,14 @@ class MockTransport:
 class MockTransportFactory:
     def __init__(self, default_host: str = "localhost"):
         self.default_host = default_host
-        
+
     def create_transport(self, **kwargs: Any) -> MockTransport:
         host = kwargs.get("host", self.default_host)
         port = kwargs.get("port")
-        
+
         if port is None:
             raise ValueError("Port is required")
-            
+
         return MockTransport(host, port, **kwargs)
 
 def test_factory_protocol():
@@ -447,21 +447,21 @@ def test_factory_protocol():
 def test_mock_factory_implementation():
     """Test that a concrete factory implementation works."""
     factory = MockTransportFactory()
-    
+
     # Test with valid arguments
     transport = factory.create_transport(port=8080)
     assert isinstance(transport, MockTransport)
     assert transport.host == "localhost"
     assert transport.port == 8080
-    
+
     # Test with custom host
     transport = factory.create_transport(host="example.com", port=8080)
     assert transport.host == "example.com"
-    
+
     # Test with missing required argument
     with pytest.raises(ValueError):
         factory.create_transport()
-        
+
     # Test with additional arguments
     transport = factory.create_transport(port=8080, timeout=30)
     assert transport.options.get("timeout") == 30
@@ -491,13 +491,13 @@ def test_registry_init():
 def test_registry_register():
     """Test registering factories."""
     registry = TransportFactoryRegistry()
-    
+
     http_factory = MockHttpTransportFactory()
     ws_factory = MockWebSocketTransportFactory()
-    
+
     registry.register("http", http_factory)
     registry.register("websocket", ws_factory)
-    
+
     assert "http" in registry._factories
     assert "websocket" in registry._factories
     assert registry._factories["http"] is http_factory
@@ -506,13 +506,13 @@ def test_registry_register():
 def test_registry_get():
     """Test getting factories by name."""
     registry = TransportFactoryRegistry()
-    
+
     http_factory = MockHttpTransportFactory()
     registry.register("http", http_factory)
-    
+
     retrieved = registry.get("http")
     assert retrieved is http_factory
-    
+
     # Test getting non-existent factory
     with pytest.raises(KeyError):
         registry.get("nonexistent")
@@ -520,19 +520,19 @@ def test_registry_get():
 def test_registry_create_transport():
     """Test creating transports through the registry."""
     registry = TransportFactoryRegistry()
-    
+
     http_factory = MockHttpTransportFactory()
     ws_factory = MockWebSocketTransportFactory()
-    
+
     registry.register("http", http_factory)
     registry.register("websocket", ws_factory)
-    
+
     http_transport = registry.create_transport("http", host="example.com")
     assert http_transport == "http_transport"
-    
+
     ws_transport = registry.create_transport("websocket", url="ws://example.com")
     assert ws_transport == "websocket_transport"
-    
+
     # Test creating with non-existent factory
     with pytest.raises(KeyError):
         registry.create_transport("nonexistent")
@@ -553,28 +553,28 @@ class MockJsonTransport:
         self.connected = False
         self.sent_messages = []
         self.receive_messages = messages or []
-        
+
     async def connect(self) -> None:
         self.connected = True
-        
+
     async def disconnect(self) -> None:
         self.connected = False
-        
+
     async def send(self, message: JsonMessage) -> None:
         if not self.connected:
             raise ConnectionError("Not connected")
         self.sent_messages.append(message)
-        
+
     async def receive(self):
         if not self.connected:
             raise ConnectionError("Not connected")
         for message in self.receive_messages:
             yield message
-            
+
     async def __aenter__(self):
         await self.connect()
         return self
-        
+
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await self.disconnect()
 
@@ -589,27 +589,27 @@ async def test_transport_integration():
     # Set up registry
     registry = TransportFactoryRegistry()
     registry.register("json", MockJsonTransportFactory())
-    
+
     # Create messages
     message1 = JsonMessage({"id": "1"}, {"data": "test1"})
     message2 = JsonMessage({"id": "2"}, {"data": "test2"})
-    
+
     # Create transport with pre-configured receive messages
     transport = registry.create_transport("json", messages=[message1, message2])
-    
+
     # Test async context manager
     async with transport as t:
         # Test sending
         await t.send(JsonMessage({"id": "3"}, {"data": "test3"}))
         assert len(t.sent_messages) == 1
         assert t.sent_messages[0].get_payload()["data"] == "test3"
-        
+
         # Test receiving
         received = [msg async for msg in t.receive()]
         assert len(received) == 2
         assert received[0].get_payload()["data"] == "test1"
         assert received[1].get_payload()["data"] == "test2"
-    
+
     # Verify disconnected after context exit
     assert not transport.connected
 ```
@@ -643,7 +643,7 @@ def test_json_message_roundtrip(headers, payload):
     message = JsonMessage(headers, payload)
     serialized = message.serialize()
     deserialized = JsonMessage.deserialize(serialized)
-    
+
     assert deserialized.get_headers() == headers
     assert deserialized.get_payload() == payload
 
@@ -659,7 +659,7 @@ def test_binary_message_roundtrip(headers, payload):
     message = BinaryMessage(headers, payload)
     serialized = message.serialize()
     deserialized = BinaryMessage.deserialize(serialized)
-    
+
     assert deserialized.get_headers() == headers
     assert deserialized.get_payload() == payload
 ```

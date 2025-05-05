@@ -240,7 +240,7 @@ class AsyncResource:
         # Asynchronous setup
         await self.connect()
         return self
-        
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         # Asynchronous cleanup
         await self.disconnect()
@@ -295,23 +295,23 @@ class TransportProtocol(Protocol):
     async def connect(self) -> None:
         """Establish the connection."""
         ...
-        
+
     async def disconnect(self) -> None:
         """Close the connection."""
         ...
-        
+
     async def send(self, data: bytes) -> None:
         """Send data over the transport."""
         ...
-        
+
     async def receive(self) -> AsyncIterator[bytes]:
         """Receive data from the transport."""
         ...
-        
+
     async def __aenter__(self) -> 'TransportProtocol':
         """Enter the async context."""
         ...
-        
+
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit the async context."""
         ...
@@ -326,16 +326,16 @@ class MessageProtocol(Protocol):
     def serialize(self) -> bytes:
         """Convert message to bytes for transmission."""
         ...
-        
+
     @classmethod
     def deserialize(cls, data: bytes) -> 'MessageProtocol':
         """Create message from received bytes."""
         ...
-        
+
     def get_headers(self) -> Dict[str, Any]:
         """Get message headers."""
         ...
-        
+
     def get_payload(self) -> Any:
         """Get message payload."""
         ...

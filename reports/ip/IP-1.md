@@ -54,60 +54,60 @@ T = TypeVar('T')
 
 class Transport(Protocol, Generic[T]):
     """Protocol defining the interface for transport implementations."""
-    
+
     async def connect(self) -> None:
         """Establish the connection to the remote endpoint.
-        
+
         Raises:
             ConnectionError: If the connection cannot be established.
             TimeoutError: If the connection attempt times out.
         """
         ...
-        
+
     async def disconnect(self) -> None:
         """Close the connection to the remote endpoint.
-        
+
         This method should be idempotent and safe to call multiple times.
         """
         ...
-        
+
     async def send(self, message: T) -> None:
         """Send a message over the transport.
-        
+
         Args:
             message: The message to send.
-            
+
         Raises:
             ConnectionError: If the connection is closed or broken.
             TransportError: For other transport-specific errors.
         """
         ...
-        
+
     async def receive(self) -> AsyncIterator[T]:
         """Receive messages from the transport.
-        
+
         Returns:
             An async iterator yielding messages as they are received.
-            
+
         Raises:
             ConnectionError: If the connection is closed or broken.
             TransportError: For other transport-specific errors.
         """
         ...
-        
+
     async def __aenter__(self) -> 'Transport[T]':
         """Enter the async context, establishing the connection.
-        
+
         Returns:
             The transport instance.
-            
+
         Raises:
             ConnectionError: If the connection cannot be established.
             TimeoutError: If the connection attempt times out.
         """
         await self.connect()
         return self
-        
+
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit the async context, closing the connection."""
         await self.disconnect()
@@ -125,41 +125,41 @@ T = TypeVar('T', bound='Message')
 
 class Message(Protocol):
     """Protocol defining the interface for message serialization/deserialization."""
-    
+
     def serialize(self) -> bytes:
         """Convert the message to bytes for transmission.
-        
+
         Returns:
             The serialized message as bytes.
         """
         ...
-        
+
     @classmethod
     def deserialize(cls: Type[T], data: bytes) -> T:
         """Create a message from received bytes.
-        
+
         Args:
             data: The serialized message as bytes.
-            
+
         Returns:
             The deserialized message.
-            
+
         Raises:
             ValueError: If the data cannot be deserialized.
         """
         ...
-        
+
     def get_headers(self) -> Dict[str, Any]:
         """Get the message headers.
-        
+
         Returns:
             A dictionary of header name to header value.
         """
         ...
-        
+
     def get_payload(self) -> Any:
         """Get the message payload.
-        
+
         Returns:
             The message payload.
         """
@@ -215,13 +215,13 @@ from typing import Dict, Any, ClassVar, Type
 
 class JsonMessage:
     """JSON-serialized message implementation."""
-    
+
     content_type: ClassVar[str] = "application/json"
-    
+
     def __init__(self, headers: Dict[str, Any], payload: Any):
         self.headers = headers
         self.payload = payload
-        
+
     def serialize(self) -> bytes:
         data = {
             "headers": self.headers,
@@ -232,7 +232,7 @@ class JsonMessage:
         except (TypeError, ValueError) as e:
             from pynector.transport.errors import SerializationError
             raise SerializationError(f"Failed to serialize JSON message: {e}")
-        
+
     @classmethod
     def deserialize(cls, data: bytes) -> 'JsonMessage':
         try:
@@ -244,10 +244,10 @@ class JsonMessage:
         except json.JSONDecodeError as e:
             from pynector.transport.errors import DeserializationError
             raise DeserializationError(f"Invalid JSON data: {e}")
-            
+
     def get_headers(self) -> Dict[str, Any]:
         return self.headers
-        
+
     def get_payload(self) -> Any:
         return self.payload
 ```
@@ -259,49 +259,49 @@ from typing import Dict, Any, ClassVar, Optional
 
 class BinaryMessage:
     """Binary message implementation."""
-    
+
     content_type: ClassVar[str] = "application/octet-stream"
-    
+
     def __init__(self, headers: Dict[str, Any], payload: bytes):
         self.headers = headers
         self.payload = payload
-        
+
     def serialize(self) -> bytes:
         # Simple format: 4-byte header length + header JSON + payload
         import json
         from pynector.transport.errors import SerializationError
-        
+
         try:
             header_json = json.dumps(self.headers).encode('utf-8')
             header_len = len(header_json)
             return header_len.to_bytes(4, byteorder='big') + header_json + self.payload
         except (TypeError, ValueError) as e:
             raise SerializationError(f"Failed to serialize binary message: {e}")
-        
+
     @classmethod
     def deserialize(cls, data: bytes) -> 'BinaryMessage':
         import json
         from pynector.transport.errors import DeserializationError
-        
+
         try:
             if len(data) < 4:
                 raise DeserializationError("Message too short")
-                
+
             header_len = int.from_bytes(data[:4], byteorder='big')
             if len(data) < 4 + header_len:
                 raise DeserializationError("Message truncated")
-                
+
             header_json = data[4:4+header_len]
             headers = json.loads(header_json.decode('utf-8'))
             payload = data[4+header_len:]
-            
+
             return cls(headers=headers, payload=payload)
         except (json.JSONDecodeError, UnicodeDecodeError) as e:
             raise DeserializationError(f"Invalid binary message format: {e}")
-            
+
     def get_headers(self) -> Dict[str, Any]:
         return self.headers
-        
+
     def get_payload(self) -> bytes:
         return self.payload
 ```
@@ -318,16 +318,16 @@ T = TypeVar('T')
 
 class TransportFactory(Protocol, Generic[T]):
     """Protocol defining the interface for transport factories."""
-    
+
     def create_transport(self, **kwargs: Any) -> T:
         """Create a new transport instance.
-        
+
         Args:
             **kwargs: Transport-specific configuration options.
-            
+
         Returns:
             A new transport instance.
-            
+
         Raises:
             ValueError: If the configuration is invalid.
         """
@@ -346,43 +346,43 @@ from pynector.transport.factory import TransportFactory
 
 class TransportFactoryRegistry:
     """Registry for transport factories."""
-    
+
     def __init__(self):
         self._factories = {}
-        
+
     def register(self, name: str, factory: TransportFactory) -> None:
         """Register a transport factory.
-        
+
         Args:
             name: The name to register the factory under.
             factory: The factory instance.
         """
         self._factories[name] = factory
-        
+
     def get(self, name: str) -> TransportFactory:
         """Get a transport factory by name.
-        
+
         Args:
             name: The name of the factory to get.
-            
+
         Returns:
             The factory instance.
-            
+
         Raises:
             KeyError: If no factory is registered with the given name.
         """
         return self._factories[name]
-        
+
     def create_transport(self, name: str, **kwargs: Any) -> Transport:
         """Create a transport using a registered factory.
-        
+
         Args:
             name: The name of the factory to use.
             **kwargs: Transport-specific configuration options.
-            
+
         Returns:
             A new transport instance.
-            
+
         Raises:
             KeyError: If no factory is registered with the given name.
         """
