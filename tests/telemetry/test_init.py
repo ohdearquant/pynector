@@ -23,50 +23,53 @@ def test_opentelemetry_detection_available():
         # Re-import to trigger detection
         import importlib
 
-        with patch.dict(sys.modules, {"pynector.telemetry": None, "src.pynector.telemetry": None}):
+        with patch.dict(
+            sys.modules, {"pynector.telemetry": None, "src.pynector.telemetry": None}
+        ):
             from src.pynector import telemetry
-            
+
             # Ensure the module is available in sys.modules under the correct name
             sys.modules["pynector.telemetry"] = telemetry
             importlib.reload(telemetry)
             assert telemetry.HAS_OPENTELEMETRY is True
+
+
 def test_opentelemetry_detection_unavailable():
     """Test that OpenTelemetry is correctly detected as unavailable."""
     import sys
-    import importlib
-    from unittest.mock import patch
 
     # First, make sure we're working with a clean import state
     for name in list(sys.modules):
-        if name.startswith('opentelemetry'):
+        if name.startswith("opentelemetry"):
             del sys.modules[name]
-    
+
     # Create a temporary mock for the telemetry module
     try:
         # Add our own version of the module to sys.modules
         from src.pynector import telemetry
+
         # For tests to pass, we need to directly set the flag to False
         # and manually patch sys.modules
-        sys.modules['pynector.telemetry'] = telemetry
-        
+        sys.modules["pynector.telemetry"] = telemetry
+
         # Directly modify the flag (simulating import failure)
         telemetry.HAS_OPENTELEMETRY = False
-        
+
         # Now verify our tests
         assert telemetry.HAS_OPENTELEMETRY is False
-            
+
         # Verify that StatusCode and Status are defined
         from src.pynector.telemetry import Status, StatusCode
-            
+
         assert hasattr(StatusCode, "ERROR")
         assert hasattr(StatusCode, "OK")
-            
+
         status = Status(StatusCode.ERROR)
         assert status.status_code == StatusCode.ERROR
     finally:
         # Clean up any created modules
         for name in list(sys.modules):
-            if name.startswith('opentelemetry') and name not in sys.modules:
+            if name.startswith("opentelemetry") and name not in sys.modules:
                 del sys.modules[name]
 
             # Verify that StatusCode and Status are defined
@@ -93,9 +96,11 @@ def test_structlog_detection_available():
         # Re-import to trigger detection
         import importlib
 
-        with patch.dict(sys.modules, {"pynector.telemetry": None, "src.pynector.telemetry": None}):
+        with patch.dict(
+            sys.modules, {"pynector.telemetry": None, "src.pynector.telemetry": None}
+        ):
             from src.pynector import telemetry
-            
+
             # Ensure the module is available in sys.modules under the correct name
             sys.modules["pynector.telemetry"] = telemetry
             importlib.reload(telemetry)
@@ -109,9 +114,11 @@ def test_structlog_detection_unavailable():
         # Re-import to trigger detection
         import importlib
 
-        with patch.dict(sys.modules, {"pynector.telemetry": None, "src.pynector.telemetry": None}):
+        with patch.dict(
+            sys.modules, {"pynector.telemetry": None, "src.pynector.telemetry": None}
+        ):
             from src.pynector import telemetry
-            
+
             # Ensure the module is available in sys.modules under the correct name
             sys.modules["pynector.telemetry"] = telemetry
             importlib.reload(telemetry)

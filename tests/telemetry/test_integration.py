@@ -1,65 +1,68 @@
 """Integration tests for the telemetry module."""
 
+from unittest.mock import patch
+
 import pytest
-import asyncio
-from unittest.mock import patch, MagicMock
-from tests.telemetry.conftest import create_autospec_mock_for_async_cm, AsyncContextManagerMock
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("has_opentelemetry,has_structlog", [
-    (True, True),
-    (True, False),
-    (False, True),
-    (False, False)
-])
+@pytest.mark.parametrize(
+    "has_opentelemetry,has_structlog",
+    [(True, True), (True, False), (False, True), (False, False)],
+)
 async def test_telemetry_integration(has_opentelemetry, has_structlog):
     """Test that all telemetry components work together correctly."""
     # Mock dependencies availability
-    with patch('src.pynector.telemetry.HAS_OPENTELEMETRY', has_opentelemetry), \
-         patch('src.pynector.telemetry.facade.HAS_OPENTELEMETRY', has_opentelemetry), \
-         patch('src.pynector.telemetry.context.HAS_OPENTELEMETRY', has_opentelemetry), \
-         patch('src.pynector.telemetry.config.HAS_OPENTELEMETRY', has_opentelemetry), \
-         patch('src.pynector.telemetry.HAS_STRUCTLOG', has_structlog), \
-         patch('src.pynector.telemetry.facade.HAS_STRUCTLOG', has_structlog), \
-         patch('src.pynector.telemetry.config.HAS_STRUCTLOG', has_structlog):
-        
+    with (
+        patch("src.pynector.telemetry.HAS_OPENTELEMETRY", has_opentelemetry),
+        patch("src.pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry),
+        patch("src.pynector.telemetry.context.HAS_OPENTELEMETRY", has_opentelemetry),
+        patch("src.pynector.telemetry.config.HAS_OPENTELEMETRY", has_opentelemetry),
+        patch("src.pynector.telemetry.HAS_STRUCTLOG", has_structlog),
+        patch("src.pynector.telemetry.facade.HAS_STRUCTLOG", has_structlog),
+        patch("src.pynector.telemetry.config.HAS_STRUCTLOG", has_structlog),
+    ):
         # Mock configure_telemetry to avoid actual configuration
-        with patch('src.pynector.telemetry.config.configure_telemetry', return_value=has_opentelemetry):
-            from src.pynector.telemetry import get_telemetry, configure_telemetry
-            
+        with patch(
+            "src.pynector.telemetry.config.configure_telemetry",
+            return_value=has_opentelemetry,
+        ):
+            from src.pynector.telemetry import configure_telemetry, get_telemetry
+
             # Configure telemetry
             configure_telemetry(service_name="test-service")
-            
+
             # Get tracer and logger
             tracer, logger = get_telemetry("test-module")
-            
+
             # Skip the async tests for the integration test
             # These are tested separately in the unit tests
             if has_opentelemetry:
                 # Just test the synchronous API
-                with tracer.start_as_current_span("test-span", {"key": "value"}) as span:
+                with tracer.start_as_current_span(
+                    "test-span", {"key": "value"}
+                ) as span:
                     # Log with structured data
                     logger.info("test-event", data="test-data")
-                    
+
                     # Set span attribute
                     span.set_attribute("result", "success")
-                    
+
                     # Test error handling
                     try:
                         raise ValueError("Test error")
                     except ValueError as e:
                         logger.error("test-error", error=str(e))
                         span.record_exception(e)
-                
+
                 # Skip the rest of the test
                 return
-            
+
             # For non-OpenTelemetry tests, just test the synchronous API
             with tracer.start_as_current_span("test-span", {"key": "value"}) as span:
                 # Log with structured data
                 logger.info("test-event", data="test-data")
-                
+
                 # Set span attribute
                 span.set_attribute("result", "success")
 
@@ -78,25 +81,24 @@ async def test_context_propagation_integration():
     pytest.skip("Skipping test that requires complex async mocking")
 
 
-@pytest.mark.parametrize("has_opentelemetry,has_structlog", [
-    (True, True),
-    (True, False),
-    (False, True),
-    (False, False)
-])
+@pytest.mark.parametrize(
+    "has_opentelemetry,has_structlog",
+    [(True, True), (True, False), (False, True), (False, False)],
+)
 def test_error_handling_integration(has_opentelemetry, has_structlog):
     """Test error handling integration."""
     # Mock dependencies availability
-    with patch('src.pynector.telemetry.HAS_OPENTELEMETRY', has_opentelemetry), \
-         patch('src.pynector.telemetry.facade.HAS_OPENTELEMETRY', has_opentelemetry), \
-         patch('src.pynector.telemetry.HAS_STRUCTLOG', has_structlog), \
-         patch('src.pynector.telemetry.facade.HAS_STRUCTLOG', has_structlog):
-        
-        from src.pynector.telemetry import get_telemetry, Status, StatusCode
-        
+    with (
+        patch("src.pynector.telemetry.HAS_OPENTELEMETRY", has_opentelemetry),
+        patch("src.pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry),
+        patch("src.pynector.telemetry.HAS_STRUCTLOG", has_structlog),
+        patch("src.pynector.telemetry.facade.HAS_STRUCTLOG", has_structlog),
+    ):
+        from src.pynector.telemetry import Status, StatusCode, get_telemetry
+
         # Get tracer and logger
         tracer, logger = get_telemetry("test-module")
-        
+
         # Test error handling in synchronous code
         try:
             with tracer.start_as_current_span("error-span") as span:
@@ -105,5 +107,5 @@ def test_error_handling_integration(has_opentelemetry, has_structlog):
                 raise ValueError("Test error")
         except ValueError:
             pass  # Expected exception
-        
+
         # No assertions needed - if no exceptions are raised during the test, it passes
