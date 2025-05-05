@@ -1,6 +1,9 @@
 # Transport Abstraction Layer
 
-The Transport Abstraction Layer is a core component of Pynector that provides a flexible and maintainable interface for network communication. It follows the sans-I/O pattern, which separates I/O concerns from protocol logic, making it easier to test, maintain, and extend.
+The Transport Abstraction Layer is a core component of Pynector that provides a
+flexible and maintainable interface for network communication. It follows the
+sans-I/O pattern, which separates I/O concerns from protocol logic, making it
+easier to test, maintain, and extend.
 
 ## Table of Contents
 
@@ -21,29 +24,42 @@ The Transport Abstraction Layer is a core component of Pynector that provides a 
 
 ## Design Philosophy
 
-The Transport Abstraction Layer is designed with the following principles in mind:
+The Transport Abstraction Layer is designed with the following principles in
+mind:
 
 ### Sans-I/O Pattern
 
-The sans-I/O pattern separates I/O concerns from protocol logic. This means that the protocol implementation doesn't directly perform I/O operations, but instead defines how to interpret and generate data. This separation has several benefits:
+The sans-I/O pattern separates I/O concerns from protocol logic. This means that
+the protocol implementation doesn't directly perform I/O operations, but instead
+defines how to interpret and generate data. This separation has several
+benefits:
 
-- **Testability**: Protocol logic can be tested without actual I/O, making tests faster and more reliable.
-- **Flexibility**: The same protocol implementation can be used with different I/O mechanisms (synchronous, asynchronous, etc.).
-- **Maintainability**: Changes to I/O mechanisms don't affect protocol logic, and vice versa.
+- **Testability**: Protocol logic can be tested without actual I/O, making tests
+  faster and more reliable.
+- **Flexibility**: The same protocol implementation can be used with different
+  I/O mechanisms (synchronous, asynchronous, etc.).
+- **Maintainability**: Changes to I/O mechanisms don't affect protocol logic,
+  and vice versa.
 
 ### Protocol-Based Design
 
-The Transport Abstraction Layer uses Python's Protocol classes (from the `typing` module) to define interfaces. This enables static type checking and makes it clear what methods a class must implement to satisfy the interface.
+The Transport Abstraction Layer uses Python's Protocol classes (from the
+`typing` module) to define interfaces. This enables static type checking and
+makes it clear what methods a class must implement to satisfy the interface.
 
 ### Async Context Management
 
-The Transport Abstraction Layer uses async context managers for resource handling. This ensures that resources are properly acquired and released, even in the presence of exceptions.
+The Transport Abstraction Layer uses async context managers for resource
+handling. This ensures that resources are properly acquired and released, even
+in the presence of exceptions.
 
 ## Components
 
 ### Transport Protocol
 
-The Transport Protocol defines the interface for all transport implementations. It includes methods for connecting, disconnecting, sending, and receiving messages.
+The Transport Protocol defines the interface for all transport implementations.
+It includes methods for connecting, disconnecting, sending, and receiving
+messages.
 
 ```python
 from collections.abc import AsyncIterator
@@ -81,7 +97,9 @@ class Transport(Protocol, Generic[T]):
 
 ### Message Protocol
 
-The Message Protocol defines the interface for message serialization and deserialization. It includes methods for converting messages to and from bytes, as well as accessing message headers and payload.
+The Message Protocol defines the interface for message serialization and
+deserialization. It includes methods for converting messages to and from bytes,
+as well as accessing message headers and payload.
 
 ```python
 from typing import Any, Protocol, TypeVar
@@ -111,7 +129,9 @@ class Message(Protocol):
 
 ### Error Hierarchy
 
-The Transport Abstraction Layer defines a comprehensive error hierarchy for transport-related errors. This makes it easier to handle specific error conditions.
+The Transport Abstraction Layer defines a comprehensive error hierarchy for
+transport-related errors. This makes it easier to handle specific error
+conditions.
 
 ```
 TransportError
@@ -139,7 +159,8 @@ The Transport Abstraction Layer includes two message implementations:
 
 #### JsonMessage
 
-The `JsonMessage` class implements the Message protocol with JSON serialization. It's suitable for text-based protocols and human-readable messages.
+The `JsonMessage` class implements the Message protocol with JSON serialization.
+It's suitable for text-based protocols and human-readable messages.
 
 ```python
 from typing import Any
@@ -170,7 +191,7 @@ class JsonMessage:
         try:
             parsed = json.loads(data.decode("utf-8"))
             return cls(
-                headers=parsed.get("headers", {}), 
+                headers=parsed.get("headers", {}),
                 payload=parsed.get("payload", None)
             )
         except json.JSONDecodeError as e:
@@ -189,7 +210,8 @@ class JsonMessage:
 
 #### BinaryMessage
 
-The `BinaryMessage` class implements the Message protocol with binary serialization. It's suitable for binary protocols and efficient transmission.
+The `BinaryMessage` class implements the Message protocol with binary
+serialization. It's suitable for binary protocols and efficient transmission.
 
 ```python
 from typing import Any
@@ -248,7 +270,9 @@ class BinaryMessage:
 
 ### Transport Factory
 
-The Transport Factory defines the interface for creating transport instances. It follows the Factory Method pattern, which provides a way to create objects without specifying the exact class of object that will be created.
+The Transport Factory defines the interface for creating transport instances. It
+follows the Factory Method pattern, which provides a way to create objects
+without specifying the exact class of object that will be created.
 
 ```python
 from typing import Any, Protocol, TypeVar
@@ -265,7 +289,8 @@ class TransportFactory(Protocol, Generic[T]):
 
 ### Transport Factory Registry
 
-The Transport Factory Registry provides a registry for transport factories. It allows for dynamic registration and lookup of transport factories.
+The Transport Factory Registry provides a registry for transport factories. It
+allows for dynamic registration and lookup of transport factories.
 
 ```python
 from typing import Any
@@ -315,7 +340,7 @@ transport = registry.create_transport("my_transport", host="example.com", port=8
 async with transport as t:
     # Send a message
     await t.send(JsonMessage({"content-type": "application/json"}, {"data": "Hello, World!"}))
-    
+
     # Receive messages
     async for message in t.receive():
         print(f"Received: {message.get_payload()}")
@@ -353,7 +378,7 @@ try:
             print(f"Connection error while sending: {e}")
         except SerializationError as e:
             print(f"Serialization error: {e}")
-        
+
         try:
             # Receive messages
             async for message in t.receive():
@@ -392,22 +417,23 @@ async with json_transport as jt, binary_transport as bt:
     # Send messages
     await jt.send(JsonMessage({"content-type": "application/json"}, {"data": "Hello, JSON!"}))
     await bt.send(BinaryMessage({"content-type": "application/octet-stream"}, b"Hello, Binary!"))
-    
+
     # Receive messages from both
     json_messages = [msg async for msg in jt.receive()]
     binary_messages = [msg async for msg in bt.receive()]
-    
+
     # Process messages
     for msg in json_messages:
         print(f"JSON message: {msg.get_payload()}")
-    
+
     for msg in binary_messages:
         print(f"Binary message: {msg.get_payload()}")
 ```
 
 ### Implementing Custom Transports
 
-To implement a custom transport, you need to create a class that satisfies the Transport protocol:
+To implement a custom transport, you need to create a class that satisfies the
+Transport protocol:
 
 ```python
 from collections.abc import AsyncIterator
@@ -450,7 +476,7 @@ class MyJsonTransport:
         """Send a message over the transport."""
         if not self.connected or not self.connection:
             raise ConnectionError("Not connected")
-        
+
         try:
             data = message.serialize()
             await self.connection.send(data)
@@ -465,7 +491,7 @@ class MyJsonTransport:
         """Receive messages from the transport."""
         if not self.connected or not self.connection:
             raise ConnectionError("Not connected")
-        
+
         try:
             while self.connected:
                 data = await self.connection.receive()
@@ -473,7 +499,7 @@ class MyJsonTransport:
                     self.connected = False
                     self.connection = None
                     break
-                
+
                 yield JsonMessage.deserialize(data)
         except some_library.ConnectionError as e:
             self.connected = False
@@ -506,12 +532,12 @@ class MyJsonTransportFactory:
         """Create a new transport instance."""
         host = kwargs.get("host")
         port = kwargs.get("port")
-        
+
         if not host:
             raise ValueError("Host is required")
         if not port:
             raise ValueError("Port is required")
-        
+
         return MyJsonTransport(host=host, port=port)
 ```
 
@@ -530,7 +556,8 @@ transport = registry.create_transport("my_json", host="example.com", port=8080)
 
 ### Implementing Custom Message Formats
 
-To implement a custom message format, you need to create a class that satisfies the Message protocol:
+To implement a custom message format, you need to create a class that satisfies
+the Message protocol:
 
 ```python
 from typing import Any, ClassVar
@@ -590,7 +617,8 @@ class MyCustomMessage:
         return self.payload
 ```
 
-Then, you can use your custom message format with any transport that supports it:
+Then, you can use your custom message format with any transport that supports
+it:
 
 ```python
 from pynector.transport import TransportFactoryRegistry
@@ -606,7 +634,8 @@ transport = registry.create_transport("my_transport", host="example.com", port=8
 async with transport as t:
     # Send a message
     await t.send(MyCustomMessage({"content-type": "application/x-custom"}, {"data": "Hello, Custom!"}))
-    
+
     # Receive messages
     async for message in t.receive():
         print(f"Received: {message.get_payload()}")
+```
