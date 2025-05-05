@@ -1,7 +1,7 @@
 # Pynector
 
 Pynector is a Python library that provides a flexible, maintainable, and
-type-safe interface for network communication.
+type-safe interface for network communication with optional observability features.
 
 ## Transport Abstraction Layer
 
@@ -75,10 +75,57 @@ async with transport as t:
 For more detailed documentation, see the
 [Transport Abstraction Layer Documentation](docs/transport.md).
 
+## Optional Observability
+
+The Optional Observability module provides telemetry features for tracing and logging with minimal dependencies. It follows a design that makes OpenTelemetry and structlog optional dependencies with no-op fallbacks.
+
+### Key Features
+
+- **Optional Dependencies**: Works with or without OpenTelemetry and structlog.
+- **No-op Fallbacks**: Graceful degradation when dependencies are not available.
+- **Context Propagation**: Maintains trace context across async boundaries.
+- **Flexible Configuration**: Configure via environment variables or API.
+- **Unified API**: Consistent interface regardless of dependency availability.
+
+### Components
+
+1. **Telemetry Facade**: Unified interface for tracing and logging operations.
+2. **No-op Implementations**: Fallbacks when dependencies are missing.
+3. **Context Propagation**: Maintains trace context in async code.
+4. **Configuration**: Flexible options for telemetry setup.
+5. **Dependency Detection**: Auto-detects available dependencies.
+
+### Usage
+
+```python
+from pynector.telemetry import get_telemetry, configure_telemetry
+
+# Configure telemetry (optional)
+configure_telemetry(service_name="my-service")
+
+# Get tracer and logger
+tracer, logger = get_telemetry("my_component")
+
+# Use the logger
+logger.info("Operation started", operation="process_data")
+
+# Use the tracer
+with tracer.start_as_current_span("process_data") as span:
+    span.set_attribute("data.size", 100)
+    logger.info("Processing data", items=100)
+```
+
+For more detailed documentation, see the
+[Optional Observability Documentation](docs/observability.md).
+
 ## Installation
 
 ```bash
+# Basic installation
 pip install pynector
+
+# With observability features
+pip install pynector[observability]
 ```
 
 ## License
