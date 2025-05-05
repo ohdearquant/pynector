@@ -67,9 +67,11 @@ other's styles.
    formality is needed, use `CRR_template`, and put under
    `reports/crr/CRR-<issue>.md`. Then need to give opinion on the PR, is it a
    go? leave a comment in the pr. Do not **approve** the PR (same gh account,
-   won't work), only comment.
+   won't work), only comment. then `uv run pre-commit run --all-files` push your
+   CRR or QA report to the same branch.
 
-8. **Documentation** (documenter): update relevant documentation
+8. **Documentation** (documenter): update relevant documentation,
+   `uv run pre-commit run --all-files`, push to same branch
 
 9. **Merge & clean** - orchestrator merges; implementer clean up the branch and
    checkout main.
@@ -149,7 +151,7 @@ incorrect:
 ```
 feat(ui): add dark-mode toggle
 
-Implements switch component & persists pref in localStorage (search: exa-xyz123 - looked up prefers-color-scheme pattern) 
+Implements switch component & persists pref in localStorage (search: exa-xyz123 - looked up prefers-color-scheme pattern)
 
 Closes #42
 ```
