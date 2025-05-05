@@ -5,15 +5,16 @@ This module contains tests for the error hierarchy of the Transport Abstraction 
 """
 
 import pytest
+
 from pynector.transport.errors import (
-    TransportError,
     ConnectionError,
-    ConnectionTimeoutError,
     ConnectionRefusedError,
+    ConnectionTimeoutError,
+    DeserializationError,
     MessageError,
     SerializationError,
-    DeserializationError,
-    TransportSpecificError
+    TransportError,
+    TransportSpecificError,
 )
 
 
@@ -27,11 +28,11 @@ def test_error_hierarchy():
     assert issubclass(SerializationError, MessageError)
     assert issubclass(DeserializationError, MessageError)
     assert issubclass(TransportSpecificError, TransportError)
-    
+
     # Test instantiation
     error = TransportError("Test error")
     assert str(error) == "Test error"
-    
+
     # Test specific error types
     timeout_error = ConnectionTimeoutError("Connection timed out")
     assert isinstance(timeout_error, ConnectionError)
@@ -47,7 +48,7 @@ def test_error_handling():
         assert "timed out" in str(e)
     except TransportError:
         pytest.fail("ConnectionTimeoutError should be caught by ConnectionError")
-        
+
     try:
         raise SerializationError("Failed to serialize message")
     except MessageError as e:
@@ -58,15 +59,17 @@ def test_error_handling():
 
 def test_custom_transport_error():
     """Test creating a custom transport-specific error."""
+
     class CustomTransportError(TransportSpecificError):
         """Custom transport error for testing."""
+
         pass
-    
+
     error = CustomTransportError("Custom error")
     assert isinstance(error, TransportSpecificError)
     assert isinstance(error, TransportError)
     assert str(error) == "Custom error"
-    
+
     # Test catching with parent types
     try:
         raise CustomTransportError("Custom error")
