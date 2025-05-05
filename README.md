@@ -1,7 +1,80 @@
 # Pynector
 
 Pynector is a Python library that provides a flexible, maintainable, and
-type-safe interface for network communication.
+type-safe interface for network communication and structured concurrency.
+
+## Structured Concurrency
+
+The Structured Concurrency module is a core component of Pynector that provides
+a robust foundation for managing concurrent operations in Python. It leverages
+AnyIO to provide a consistent interface for structured concurrency across both
+asyncio and trio backends.
+
+### Key Features
+
+- **Structured Concurrency Pattern**: Ensures that concurrent operations have
+  well-defined lifetimes that are bound to a scope.
+- **AnyIO Integration**: Provides a consistent interface for both asyncio and
+  trio backends.
+- **Task Groups**: Manage multiple concurrent tasks with proper cleanup and
+  error propagation.
+- **Cancellation Scopes**: Fine-grained control over task cancellation and
+  timeouts.
+- **Resource Management Primitives**: Synchronization mechanisms like locks,
+  semaphores, and events.
+- **Concurrency Patterns**: Common patterns like connection pools, parallel
+  requests, and worker pools.
+
+### Components
+
+The Structured Concurrency module consists of the following components:
+
+1. **Task Groups**: Provide a way to spawn and manage multiple concurrent tasks
+   while ensuring proper cleanup and error propagation.
+
+2. **Cancellation Scopes**: Provide fine-grained control over task cancellation
+   and timeouts.
+
+3. **Resource Management Primitives**: Implement synchronization mechanisms for
+   coordinating access to shared resources.
+
+4. **Error Handling**: Utilities for handling cancellation and shielding tasks
+   from cancellation.
+
+5. **Concurrency Patterns**: Implement common patterns like connection pools,
+   parallel requests, and worker pools.
+
+### Usage
+
+Here's a simple example of how to use the Structured Concurrency module:
+
+```python
+import asyncio
+from pynector.concurrency import create_task_group
+
+async def task1():
+    print("Task 1 started")
+    await asyncio.sleep(1)
+    print("Task 1 completed")
+
+async def task2():
+    print("Task 2 started")
+    await asyncio.sleep(2)
+    print("Task 2 completed")
+
+async def main():
+    async with create_task_group() as tg:
+        await tg.start_soon(task1)
+        await tg.start_soon(task2)
+        print("All tasks started")
+
+    print("All tasks completed")
+
+asyncio.run(main())
+```
+
+For more detailed documentation, see the
+[Structured Concurrency Documentation](docs/concurrency.md).
 
 ## Transport Abstraction Layer
 
