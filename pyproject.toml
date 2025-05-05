@@ -1,12 +1,43 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "pynector"
 version = "0.1.0"
-description = "Add your description here"
+description = "Python Connector Library"
 readme = "README.md"
 requires-python = ">=3.9"
+license = {file = "LICENSE"}
+authors = [
+    {name = "pynector Team", email = "info@pynector.org"}
+]
 dependencies = []
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
-    "pre-commit>=4.2.0",
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.18.0",
+    "pytest-cov>=3.0.0",
+    "hypothesis>=6.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+asyncio_mode = "strict"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "\\.\\.\\.",
 ]
