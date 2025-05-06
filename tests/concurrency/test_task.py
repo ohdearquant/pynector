@@ -84,7 +84,7 @@ async def test_task_group_multiple_errors():
         async with create_task_group() as tg:
             await tg.start_soon(failing_task_1)
             await tg.start_soon(failing_task_2)
-    except* Exception as eg:
+    except Exception as eg:
         # Check that both exceptions are in the group
         assert len(eg.exceptions) == 2
         assert any(isinstance(e, ValueError) for e in eg.exceptions)
