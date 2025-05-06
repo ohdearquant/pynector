@@ -97,6 +97,8 @@ easier to test, maintain, and extend.
 - **Message Protocols**: Flexible message serialization and deserialization with
   support for different formats.
 - **Factory Pattern**: Factory method pattern for creating transport instances.
+- **HTTP Transport**: Complete HTTP client implementation using httpx with
+  connection pooling, retry mechanism, and comprehensive error handling.
 
 ### Components
 
@@ -115,35 +117,58 @@ The Transport Abstraction Layer consists of the following components:
 4. **Message Implementations**:
    - `JsonMessage`: Implements JSON serialization/deserialization.
    - `BinaryMessage`: Implements binary message format with headers and payload.
+   - `HttpMessage`: Implements HTTP-specific message format with support for
+     headers, query parameters, JSON data, form data, and file uploads.
 
 5. **Transport Factory**: Implements the Factory Method pattern for creating
    transport instances.
 
 6. **Transport Factory Registry**: Provides a registry for transport factories.
 
+7. **HTTP Transport Implementation**:
+   - `HTTPTransport`: Implements the Transport Protocol for HTTP communication
+     using httpx.
+   - `HTTPTransportFactory`: Creates and configures HTTP transport instances.
+   - HTTP-specific error hierarchy for detailed error handling.
+
 ### Usage
 
-Here's a simple example of how to use the Transport Abstraction Layer:
+Here's a simple example of how to use the Transport Abstraction Layer with the
+HTTP transport:
 
 ```python
 from pynector.transport import TransportFactoryRegistry
-from pynector.transport.message import JsonMessage
+from pynector.transport.http import HttpMessage, HTTPTransportFactory
 
 # Set up registry
 registry = TransportFactoryRegistry()
-registry.register("my_transport", MyTransportFactory())
+registry.register(
+    "http",
+    HTTPTransportFactory(
+        base_url="https://api.example.com",
+        message_type=HttpMessage,
+    ),
+)
 
 # Create a transport
-transport = registry.create_transport("my_transport", host="example.com", port=8080)
+transport = registry.create_transport("http")
 
 # Use the transport with async context manager
 async with transport as t:
-    # Send a message
-    await t.send(JsonMessage({"content-type": "application/json"}, {"data": "Hello, World!"}))
+    # Create a GET request message
+    message = HttpMessage(
+        method="GET",
+        url="/users",
+        params={"limit": 10},
+    )
 
-    # Receive messages
-    async for message in t.receive():
-        print(f"Received: {message.get_payload()}")
+    # Send the message
+    await t.send(message)
+
+    # Receive the response
+    async for response in t.receive():
+        data = response.get_payload()["data"]
+        print(f"Received {len(data)} users")
 ```
 
 For more detailed documentation, see the

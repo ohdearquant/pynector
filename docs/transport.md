@@ -15,6 +15,8 @@ easier to test, maintain, and extend.
   - [Message Implementations](#message-implementations)
   - [Transport Factory](#transport-factory)
   - [Transport Factory Registry](#transport-factory-registry)
+- [Transport Implementations](#transport-implementations)
+  - [HTTP Transport](#http-transport)
 - [Usage Examples](#usage-examples)
   - [Basic Usage](#basic-usage)
   - [Error Handling](#error-handling)
@@ -318,6 +320,34 @@ class TransportFactoryRegistry:
         factory = self.get(name)
         return factory.create_transport(**kwargs)
 ```
+
+## Transport Implementations
+
+The Transport Abstraction Layer includes implementations for common transport
+protocols.
+
+### HTTP Transport
+
+The HTTP Transport Implementation provides a complete solution for HTTP
+communication within the Pynector framework. It is built on the `httpx` library
+and provides a robust, feature-rich HTTP client with support for modern HTTP
+features.
+
+Key features of the HTTP Transport Implementation include:
+
+- **Async-first design**: Built on `httpx.AsyncClient` for efficient
+  asynchronous HTTP communication
+- **Connection pooling**: Reuses connections for improved performance
+- **Comprehensive error handling**: Maps HTTP errors to the Transport error
+  hierarchy
+- **Retry mechanism**: Automatically retries failed requests with exponential
+  backoff
+- **Support for modern HTTP features**: Includes query parameters, headers, form
+  data, JSON, and file uploads
+- **Streaming support**: Efficiently handles large responses with streaming
+
+For detailed documentation on the HTTP Transport Implementation, see
+[HTTP Transport Documentation](http_transport.md).
 
 ## Usage Examples
 
