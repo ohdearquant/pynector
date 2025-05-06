@@ -5,7 +5,8 @@ This module provides a registry for transport factories, allowing for
 dynamic registration and lookup of transport factories.
 """
 
-from typing import Any
+import importlib
+from typing import Any, List
 
 from pynector.transport.factory import TransportFactory
 from pynector.transport.protocol import Transport
@@ -56,3 +57,47 @@ class TransportFactoryRegistry:
         """
         factory = self.get(name)
         return factory.create_transport(**kwargs)
+
+    def get_registered_names(self) -> list[str]:
+        """Get a list of all registered factory names.
+
+        Returns:
+            A list of all registered factory names.
+        """
+        return list(self._factories.keys())
+
+
+# Global registry instance
+_registry = None
+
+
+def get_transport_factory_registry() -> TransportFactoryRegistry:
+    """Get the global transport factory registry.
+
+    Returns:
+        The global transport factory registry.
+    """
+    global _registry
+    if _registry is None:
+        _registry = TransportFactoryRegistry()
+
+        # Try to register built-in transport factories
+        # We use importlib to avoid issues with circular imports
+        # or missing optional dependencies
+        try:
+            http_module = importlib.import_module("pynector.transport.http.factory")
+            http_factory = getattr(http_module, "HttpTransportFactory")
+            _registry.register("http", http_factory())
+        except (ImportError, AttributeError):
+            # HTTP transport is optional
+            pass
+
+        try:
+            sdk_module = importlib.import_module("pynector.transport.sdk.factory")
+            sdk_factory = getattr(sdk_module, "SdkTransportFactory")
+            _registry.register("sdk", sdk_factory())
+        except (ImportError, AttributeError):
+            # SDK transport is optional
+            pass
+
+    return _registry

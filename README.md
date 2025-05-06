@@ -4,6 +4,43 @@ Pynector is a Python library that provides a flexible, maintainable, and
 type-safe interface for network communication with optional observability
 features and structured concurrency.
 
+## Core Pynector Client
+
+The `Pynector` class is the main entry point for using the library. It integrates the Transport Abstraction Layer, Structured Concurrency, and Optional Observability components into a cohesive, user-friendly API.
+
+### Key Features
+
+- **Flexible Transport Integration**: Works with both built-in and custom transports
+- **Efficient Batch Processing**: Parallel request processing with concurrency limits
+- **Optional Observability**: Integrated tracing and logging with no-op fallbacks
+- **Resource Safety**: Proper async resource management with context managers
+- **Robust Error Handling**: Specific exception types and retry mechanisms
+
+### Usage
+
+```python
+from pynector import Pynector
+
+# Create a client with HTTP transport
+async with Pynector(
+    transport_type="http",
+    base_url="https://api.example.com",
+    headers={"Content-Type": "application/json"}
+) as client:
+    # Make a request
+    response = await client.request({"path": "/users", "method": "GET"})
+    
+    # Make multiple requests in parallel
+    requests = [
+        ({"path": "/users/1", "method": "GET"}, {}),
+        ({"path": "/users/2", "method": "GET"}, {}),
+        ({"path": "/users/3", "method": "GET"}, {})
+    ]
+    responses = await client.batch_request(requests, max_concurrency=2)
+```
+
+For more detailed documentation, see the [Core Client Documentation](docs/client.md).
+
 ## Structured Concurrency
 
 The Structured Concurrency module is a core component of Pynector that provides
