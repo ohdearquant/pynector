@@ -252,7 +252,6 @@ def configure_telemetry(
     if HAS_OPENTELEMETRY and not HAS_STRUCTLOG and not trace_enabled:
         return False
     return telemetry_configured
-    return trace_enabled
 
 
 def _configure_exporters(tracer_provider, exporters=None):

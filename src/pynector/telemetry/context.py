@@ -101,7 +101,7 @@ async def traced_gather(
             wrapped = [with_context(coro) for coro in coroutines]
             return await asyncio.gather(*wrapped)
         except ImportError:
-            # If OpenTelemetry is not available, just use regular gather
+            # If there's an issue with OpenTelemetry imports, fall back to regular gather
             return await asyncio.gather(*coroutines)
 
 

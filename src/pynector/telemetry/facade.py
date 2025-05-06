@@ -151,19 +151,15 @@ class TracingFacade:
                     raise
             except ImportError:
                 # Fallback if opentelemetry is not available
-                span = NoOpSpan(name, attributes)
-                try:
-                    await span.__aenter__()
-                    yield span
-                finally:
-                    await span.__aexit__(None, None, None)
-        else:
-            span = NoOpSpan(name, attributes)
-            try:
-                await span.__aenter__()
-                yield span
-            finally:
-                await span.__aexit__(None, None, None)
+                pass
+        
+        # Use NoOpSpan if OpenTelemetry is not available or there was an ImportError
+        span = NoOpSpan(name, attributes)
+        try:
+            await span.__aenter__()
+            yield span
+        finally:
+            await span.__aexit__(None, None, None)
 
 
 class LoggingFacade:
