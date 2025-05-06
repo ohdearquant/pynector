@@ -5,11 +5,8 @@ This module provides a factory for creating and configuring HTTP transport
 instances according to the TransportFactory protocol.
 """
 
-from typing import Any, Dict, Optional, Set, Type, TypeVar
+from typing import Any, Optional, TypeVar
 
-import httpx
-
-from pynector.transport.http.message import HttpMessage
 from pynector.transport.http.transport import HTTPTransport
 from pynector.transport.protocol import Message
 
@@ -18,12 +15,12 @@ T = TypeVar("T", bound=Message)
 
 class HTTPTransportFactory:
     """Factory for creating HTTP transport instances."""
-    
+
     def __init__(
-        self, 
+        self,
         base_url: str,
-        message_type: Type[T],
-        default_headers: Optional[Dict[str, str]] = None,
+        message_type: type[T],
+        default_headers: Optional[dict[str, str]] = None,
         default_timeout: float = 30.0,
         default_max_retries: int = 3,
         default_retry_backoff_factor: float = 0.5,
@@ -33,7 +30,7 @@ class HTTPTransportFactory:
         default_http2: bool = False,
     ):
         """Initialize the factory with default configuration.
-        
+
         Args:
             base_url: The base URL for all requests
             message_type: The message type to use for deserialization
@@ -52,14 +49,20 @@ class HTTPTransportFactory:
         self.default_timeout = default_timeout
         self.default_max_retries = default_max_retries
         self.default_retry_backoff_factor = default_retry_backoff_factor
-        self.default_retry_status_codes = default_retry_status_codes or {429, 500, 502, 503, 504}
+        self.default_retry_status_codes = default_retry_status_codes or {
+            429,
+            500,
+            502,
+            503,
+            504,
+        }
         self.default_follow_redirects = default_follow_redirects
         self.default_verify_ssl = default_verify_ssl
         self.default_http2 = default_http2
-    
+
     def create_transport(self, **kwargs: Any) -> HTTPTransport[T]:
         """Create a new HTTP transport instance.
-        
+
         Args:
             **kwargs: HTTP transport configuration options.
                 - headers: Optional[Dict[str, str]] - Additional headers to include
@@ -70,7 +73,7 @@ class HTTPTransportFactory:
                 - follow_redirects: Optional[bool] - Whether to follow redirects
                 - verify_ssl: Optional[bool] - Whether to verify SSL certificates
                 - http2: Optional[bool] - Whether to enable HTTP/2 support
-                
+
         Returns:
             A new HTTP transport instance.
         """
@@ -78,15 +81,19 @@ class HTTPTransportFactory:
         headers = {**self.default_headers}
         if "headers" in kwargs and kwargs["headers"]:
             headers.update(kwargs["headers"])
-        
+
         timeout = kwargs.get("timeout", self.default_timeout)
         max_retries = kwargs.get("max_retries", self.default_max_retries)
-        retry_backoff_factor = kwargs.get("retry_backoff_factor", self.default_retry_backoff_factor)
-        retry_status_codes = kwargs.get("retry_status_codes", self.default_retry_status_codes)
+        retry_backoff_factor = kwargs.get(
+            "retry_backoff_factor", self.default_retry_backoff_factor
+        )
+        retry_status_codes = kwargs.get(
+            "retry_status_codes", self.default_retry_status_codes
+        )
         follow_redirects = kwargs.get("follow_redirects", self.default_follow_redirects)
         verify_ssl = kwargs.get("verify_ssl", self.default_verify_ssl)
         http2 = kwargs.get("http2", self.default_http2)
-        
+
         transport = HTTPTransport[T](
             base_url=self.base_url,
             headers=headers,
@@ -98,8 +105,8 @@ class HTTPTransportFactory:
             verify_ssl=verify_ssl,
             http2=http2,
         )
-        
+
         # Set message type for deserialization
         transport._message_type = self.message_type
-        
+
         return transport

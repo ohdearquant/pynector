@@ -5,8 +5,6 @@ This module contains tests for the HTTPTransportFactory class, which creates
 and configures HTTPTransport instances.
 """
 
-import pytest
-
 from pynector.transport.http.factory import HTTPTransportFactory
 from pynector.transport.http.message import HttpMessage
 from pynector.transport.http.transport import HTTPTransport
@@ -14,12 +12,11 @@ from pynector.transport.http.transport import HTTPTransport
 
 class TestHTTPTransportFactory:
     """Tests for the HTTPTransportFactory class."""
-    
+
     def test_init_default_values(self):
         """Test HTTPTransportFactory initialization with default values."""
         factory = HTTPTransportFactory(
-            base_url="https://example.com",
-            message_type=HttpMessage
+            base_url="https://example.com", message_type=HttpMessage
         )
         assert factory.base_url == "https://example.com"
         assert factory.message_type == HttpMessage
@@ -31,7 +28,7 @@ class TestHTTPTransportFactory:
         assert factory.default_follow_redirects is True
         assert factory.default_verify_ssl is True
         assert factory.default_http2 is False
-    
+
     def test_init_custom_values(self):
         """Test HTTPTransportFactory initialization with custom values."""
         factory = HTTPTransportFactory(
@@ -44,7 +41,7 @@ class TestHTTPTransportFactory:
             default_retry_status_codes={500, 502},
             default_follow_redirects=False,
             default_verify_ssl=False,
-            default_http2=True
+            default_http2=True,
         )
         assert factory.base_url == "https://example.com"
         assert factory.message_type == HttpMessage
@@ -56,15 +53,14 @@ class TestHTTPTransportFactory:
         assert factory.default_follow_redirects is False
         assert factory.default_verify_ssl is False
         assert factory.default_http2 is True
-    
+
     def test_create_transport_default(self):
         """Test create_transport with default options."""
         factory = HTTPTransportFactory(
-            base_url="https://example.com",
-            message_type=HttpMessage
+            base_url="https://example.com", message_type=HttpMessage
         )
         transport = factory.create_transport()
-        
+
         assert isinstance(transport, HTTPTransport)
         assert transport.base_url == "https://example.com"
         assert transport._message_type == HttpMessage
@@ -76,13 +72,13 @@ class TestHTTPTransportFactory:
         assert transport.follow_redirects is True
         assert transport.verify_ssl is True
         assert transport.http2 is False
-    
+
     def test_create_transport_custom(self):
         """Test create_transport with custom options."""
         factory = HTTPTransportFactory(
             base_url="https://example.com",
             message_type=HttpMessage,
-            default_headers={"User-Agent": "pynector/1.0"}
+            default_headers={"User-Agent": "pynector/1.0"},
         )
         transport = factory.create_transport(
             headers={"X-Test": "test"},
@@ -92,9 +88,9 @@ class TestHTTPTransportFactory:
             retry_status_codes={500, 502},
             follow_redirects=False,
             verify_ssl=False,
-            http2=True
+            http2=True,
         )
-        
+
         assert isinstance(transport, HTTPTransport)
         assert transport.base_url == "https://example.com"
         assert transport._message_type == HttpMessage
@@ -106,20 +102,23 @@ class TestHTTPTransportFactory:
         assert transport.follow_redirects is False
         assert transport.verify_ssl is False
         assert transport.http2 is True
-    
+
     def test_create_transport_merge_headers(self):
         """Test that headers are correctly merged."""
         factory = HTTPTransportFactory(
             base_url="https://example.com",
             message_type=HttpMessage,
-            default_headers={"User-Agent": "pynector/1.0", "Accept": "application/json"}
+            default_headers={
+                "User-Agent": "pynector/1.0",
+                "Accept": "application/json",
+            },
         )
         transport = factory.create_transport(
             headers={"X-Test": "test", "Accept": "text/plain"}
         )
-        
+
         assert transport.headers == {
             "User-Agent": "pynector/1.0",
             "Accept": "text/plain",  # Should override the default
-            "X-Test": "test"
+            "X-Test": "test",
         }

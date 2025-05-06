@@ -141,11 +141,11 @@ async def test_send_basic():
     """Test basic send functionality."""
     transport = HTTPTransport()
     message = HttpMessage(method="GET", url="/test")
-    
+
     # Mock the AsyncClient.request method
     mock_response = MagicMock(spec=httpx.Response)
     mock_response.status_code = 200
-    
+
     with patch.object(httpx.AsyncClient, "request", return_value=mock_response):
         await transport.connect()
         await transport.send(message)
@@ -156,7 +156,7 @@ async def test_send_not_connected():
     """Test send when not connected raises ConnectionError."""
     transport = HTTPTransport()
     message = HttpMessage(method="GET", url="/test")
-    
+
     with pytest.raises(ConnectionError, match="Transport not connected"):
         await transport.send(message)
 
@@ -165,14 +165,14 @@ async def test_send_retry_success():
     """Test send with retry logic (success after retry)."""
     transport = HTTPTransport(max_retries=2)
     message = HttpMessage(method="GET", url="/test")
-    
+
     # First request fails with 503, second succeeds with 200
     mock_response_fail = MagicMock(spec=httpx.Response)
     mock_response_fail.status_code = 503
-    
+
     mock_response_success = MagicMock(spec=httpx.Response)
     mock_response_success.status_code = 200
-    
+
     with patch.object(httpx.AsyncClient, "request", side_effect=[mock_response_fail, mock_response_success]):
         await transport.connect()
         await transport.send(message)
@@ -183,12 +183,12 @@ async def test_send_retry_max_exceeded():
     """Test send with retry logic (max retries exceeded)."""
     transport = HTTPTransport(max_retries=2)
     message = HttpMessage(method="GET", url="/test")
-    
+
     # All requests fail with 503
     mock_response = MagicMock(spec=httpx.Response)
     mock_response.status_code = 503
     mock_response.reason_phrase = "Service Unavailable"
-    
+
     with patch.object(httpx.AsyncClient, "request", return_value=mock_response):
         await transport.connect()
         with pytest.raises(HTTPServerError):
@@ -200,11 +200,11 @@ async def test_send_network_error_retry():
     """Test send with network error retry."""
     transport = HTTPTransport(max_retries=2)
     message = HttpMessage(method="GET", url="/test")
-    
+
     # First request fails with ConnectError, second succeeds
     mock_response = MagicMock(spec=httpx.Response)
     mock_response.status_code = 200
-    
+
     with patch.object(httpx.AsyncClient, "request", side_effect=[httpx.ConnectError("Connection error"), mock_response]):
         await transport.connect()
         await transport.send(message)
@@ -220,7 +220,7 @@ async def test_receive_basic():
     """Test basic receive functionality."""
     transport = HTTPTransport()
     transport._message_type = HttpMessage
-    
+
     # Mock _get_next_response to return a valid response
     mock_response = b'{"headers": {}, "payload": {"data": "test"}}'
     with patch.object(HTTPTransport, "_get_next_response", return_value=mock_response):
@@ -234,7 +234,7 @@ async def test_receive_basic():
 async def test_receive_not_connected():
     """Test receive when not connected raises ConnectionError."""
     transport = HTTPTransport()
-    
+
     with pytest.raises(ConnectionError, match="Transport not connected"):
         async for _ in transport.receive():
             pass
@@ -244,7 +244,7 @@ async def test_receive_no_message_type():
     """Test receive with no message type set."""
     transport = HTTPTransport()
     await transport.connect()
-    
+
     with pytest.raises(HTTPTransportError, match="No message type has been set"):
         async for _ in transport.receive():
             pass
@@ -254,7 +254,7 @@ async def test_receive_deserialization_error():
     """Test receive with deserialization error."""
     transport = HTTPTransport()
     transport._message_type = HttpMessage
-    
+
     # Mock _get_next_response to return invalid data
     with patch.object(HTTPTransport, "_get_next_response", return_value=b'invalid json'):
         await transport.connect()
@@ -271,7 +271,7 @@ def test_extract_headers():
     """Test _extract_headers method."""
     transport = HTTPTransport(headers={"User-Agent": "pynector/1.0"})
     message = HttpMessage(headers={"Content-Type": "application/json", "X-Test": "test"})
-    
+
     headers = transport._extract_headers(message)
     assert headers["User-Agent"] == "pynector/1.0"
     assert headers["Content-Type"] == "application/json"
@@ -286,7 +286,7 @@ def test_prepare_request():
         params={"q": "test"},
         json_data={"data": "test"}
     )
-    
+
     method, url, request_kwargs = transport._prepare_request(message)
     assert method == "POST"
     assert url == "/test"
@@ -296,7 +296,7 @@ def test_prepare_request():
 def test_handle_error_response():
     """Test _handle_error_response method."""
     transport = HTTPTransport()
-    
+
     # Test various status codes
     for status_code, error_class in [
         (401, HTTPUnauthorizedError),
@@ -310,7 +310,7 @@ def test_handle_error_response():
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = status_code
         mock_response.reason_phrase = "Test"
-        
+
         with pytest.raises(error_class):
             transport._handle_error_response(mock_response)
 ```
@@ -360,7 +360,7 @@ def test_http_message_deserialize():
             "params": {"q": "test"}
         }
     }).encode("utf-8")
-    
+
     message = HttpMessage.deserialize(data)
     assert message.headers == {"X-Test": "test"}
     assert message.payload["method"] == "GET"
@@ -467,7 +467,7 @@ async def test_http_transport_with_registry():
         message_type=HttpMessage
     )
     registry.register("http", factory)
-    
+
     transport = registry.create_transport("http")
     assert isinstance(transport, HTTPTransport)
     assert transport.base_url == "https://example.com"
@@ -479,11 +479,11 @@ async def test_http_transport_end_to_end():
     # Set up mock server
     async with MockHTTPServer() as server:
         server.add_route("/test", lambda: {"data": "test"}, status_code=200)
-        
+
         # Create transport
         transport = HTTPTransport(base_url=server.url)
         message = HttpMessage(method="GET", url="/test")
-        
+
         # Send and receive
         async with transport:
             await transport.send(message)
@@ -497,17 +497,17 @@ async def test_http_transport_streaming():
     # Set up mock server
     async with MockHTTPServer() as server:
         server.add_streaming_route("/stream", ["chunk1", "chunk2", "chunk3"])
-        
+
         # Create transport
         transport = HTTPTransport(base_url=server.url)
         message = HttpMessage(method="GET", url="/stream")
-        
+
         # Stream response
         chunks = []
         async with transport:
             async for chunk in transport.stream_response(message):
                 chunks.append(chunk)
-        
+
         assert len(chunks) == 3
         assert b"".join(chunks).decode("utf-8") == "chunk1chunk2chunk3"
 ```
@@ -532,7 +532,7 @@ def test_http_message_roundtrip(method, url, params, json_data):
     )
     data = message.serialize()
     deserialized = HttpMessage.deserialize(data)
-    
+
     assert deserialized.payload["method"] == message.payload["method"]
     assert deserialized.payload["url"] == message.payload["url"]
     assert deserialized.payload["params"] == message.payload["params"]
@@ -555,9 +555,9 @@ def test_http_transport_factory_properties(base_url, headers, timeout, max_retri
         default_max_retries=max_retries,
         default_retry_backoff_factor=retry_backoff_factor
     )
-    
+
     transport = factory.create_transport()
-    
+
     assert transport.base_url == base_url
     assert transport.headers == headers
     assert transport.timeout == timeout
@@ -574,38 +574,38 @@ simple mock HTTP server:
 # Pseudocode for MockHTTPServer
 class MockHTTPServer:
     """Mock HTTP server for testing."""
-    
+
     def __init__(self):
         self.app = web.Application()
         self.routes = {}
         self.server = None
         self.url = None
-    
+
     async def __aenter__(self):
         """Start the server."""
         # Set up routes
         for path, (handler, status_code) in self.routes.items():
             self.app.router.add_get(path, self._create_handler(handler, status_code))
-        
+
         # Start the server
         self.runner = web.AppRunner(self.app)
         await self.runner.setup()
         self.site = web.TCPSite(self.runner, "localhost", 0)
         await self.site.start()
-        
+
         # Get the server URL
         self.url = f"http://localhost:{self.site._server.sockets[0].getsockname()[1]}"
-        
+
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Stop the server."""
         await self.runner.cleanup()
-    
+
     def add_route(self, path, handler, status_code=200):
         """Add a route to the server."""
         self.routes[path] = (handler, status_code)
-    
+
     def add_streaming_route(self, path, chunks):
         """Add a streaming route to the server."""
         async def streaming_handler(request):
@@ -615,15 +615,15 @@ class MockHTTPServer:
                 await response.write(chunk.encode("utf-8"))
                 await asyncio.sleep(0.01)
             return response
-        
+
         self.app.router.add_get(path, streaming_handler)
-    
+
     def _create_handler(self, handler, status_code):
         """Create a request handler."""
         async def request_handler(request):
             result = handler() if callable(handler) else handler
             return web.json_response(result, status=status_code)
-        
+
         return request_handler
 ```
 
