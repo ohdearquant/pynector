@@ -62,7 +62,7 @@ __all__ = [
     "Pynector",
     "PynectorError",
     "TransportError",
-    "ConfigurationError", 
+    "ConfigurationError",
     "TimeoutError",
     "configure_telemetry",
 ]
@@ -104,11 +104,11 @@ from typing import Any, Dict, Optional
 
 def get_env_config(key: str, default: Any = None) -> Any:
     """Get a configuration value from environment variables.
-    
+
     Args:
         key: The configuration key (will be prefixed with PYNECTOR_)
         default: The default value if not found
-        
+
     Returns:
         The configuration value
     """
@@ -122,24 +122,24 @@ def merge_configs(
     override: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Merge configuration dictionaries.
-    
+
     Args:
         base: The base configuration
         override: The override configuration
-        
+
     Returns:
         The merged configuration
     """
     if override is None:
         return base.copy()
-    
+
     result = base.copy()
     for key, value in override.items():
         if isinstance(value, dict) and key in result and isinstance(result[key], dict):
             result[key] = merge_configs(result[key], value)
         else:
             result[key] = value
-    
+
     return result
 ```
 
@@ -225,11 +225,11 @@ class Pynector:
 
     def _get_config(self, key: str, default: Any = None) -> Any:
         """Get a configuration value from the hierarchy.
-        
+
         Args:
             key: The configuration key
             default: The default value if not found
-            
+
         Returns:
             The configuration value
         """
@@ -251,10 +251,10 @@ class Pynector:
 ```python
     async def _get_transport(self) -> TransportProtocol:
         """Get or create a transport instance.
-        
+
         Returns:
             The transport instance
-            
+
         Raises:
             ConfigurationError: If the transport cannot be created
         """
@@ -271,14 +271,14 @@ class Pynector:
                 # Connect the transport
                 await self._transport.connect()
                 self._transport_initialized = True
-                
+
                 if self._logger:
                     self._logger.info(
                         "transport.connected",
                         transport_type=self._transport_type,
                         owns_transport=self._owns_transport
                     )
-                    
+
             except Exception as e:
                 if self._logger:
                     self._logger.error(
@@ -324,7 +324,7 @@ class Pynector:
                 span.set_attribute("request.size", len(str(data)))
                 if options:
                     span.set_attribute("request.options", str(options))
-                
+
                 try:
                     result = await self._perform_request_with_timeout(data, timeout, **options)
                     span.set_attribute("response.size", len(str(result)))
@@ -342,15 +342,15 @@ class Pynector:
         **options
     ) -> Any:
         """Perform a request with timeout handling.
-        
+
         Args:
             data: The data to send
             timeout: Optional timeout in seconds
             **options: Additional options for the request
-            
+
         Returns:
             The response data
-            
+
         Raises:
             TimeoutError: If the request times out
             TransportError: If there is an error with the transport
@@ -395,7 +395,7 @@ class Pynector:
                 )
 
             return result
-            
+
         except Exception as e:
             # Log error if logging is enabled
             if self._logger:
@@ -404,26 +404,26 @@ class Pynector:
                     error=str(e),
                     error_type=type(e).__name__
                 )
-            
+
             # Re-raise the exception
             raise
 
     async def _perform_request(self, data: Any, **options) -> Any:
         """Perform the actual request.
-        
+
         Args:
             data: The data to send
             **options: Additional options for the request
-            
+
         Returns:
             The response data
-            
+
         Raises:
             TransportError: If there is an error with the transport
             PynectorError: For other errors
         """
         transport = await self._get_transport()
-        
+
         try:
             await transport.send(data, **options)
             result = b""
@@ -466,7 +466,7 @@ class Pynector:
             PynectorError: For other errors if raise_on_error is True.
         """
         results = [None] * len(requests)
-        
+
         # Start span if tracing is enabled
         if self._tracer:
             with self._tracer.start_as_current_span("pynector.batch_request") as span:
@@ -475,7 +475,7 @@ class Pynector:
                     span.set_attribute("max_concurrency", max_concurrency)
                 if timeout:
                     span.set_attribute("timeout", timeout)
-                
+
                 try:
                     results = await self._perform_batch_request(
                         requests, max_concurrency, timeout, raise_on_error, **options
@@ -500,23 +500,23 @@ class Pynector:
         **options
     ) -> List[Any]:
         """Perform multiple requests in parallel.
-        
+
         Args:
             requests: List of (data, options) tuples
             max_concurrency: Maximum number of concurrent requests
             timeout: Optional timeout in seconds for the entire batch
             raise_on_error: Whether to raise on the first error
             **options: Additional options for all requests
-            
+
         Returns:
             List of responses or exceptions
-            
+
         Raises:
             TimeoutError: If the batch times out and raise_on_error is True
             PynectorError: For other errors if raise_on_error is True
         """
         results = [None] * len(requests)
-        
+
         # Log batch request if logging is enabled
         if self._logger:
             self._logger.info(
@@ -534,14 +534,14 @@ class Pynector:
                 # Merge options
                 merged_options = options.copy()
                 merged_options.update(request_options)
-                
+
                 # Process with limiter if specified
                 if limiter:
                     async with limiter:
                         result = await self.request(data, **merged_options)
                 else:
                     result = await self.request(data, **merged_options)
-                    
+
                 results[index] = result
             except Exception as e:
                 results[index] = e
@@ -559,7 +559,7 @@ class Pynector:
                 async with anyio.create_task_group() as tg:
                     for i, (data, request_options) in enumerate(requests):
                         await tg.start_soon(process_request, i, data, request_options)
-                        
+
             # Log completion if logging is enabled
             if self._logger:
                 success_count = sum(1 for r in results if not isinstance(r, Exception))
@@ -570,9 +570,9 @@ class Pynector:
                     success_count=success_count,
                     error_count=error_count
                 )
-                
+
             return results
-            
+
         except anyio.TimeoutError:
             # Log timeout if logging is enabled
             if self._logger:
@@ -581,15 +581,15 @@ class Pynector:
                     timeout=timeout,
                     request_count=len(requests)
                 )
-            
+
             if raise_on_error:
                 raise TimeoutError(f"Batch request timed out after {timeout} seconds")
-            
+
             # Fill remaining results with timeout errors
             for i, result in enumerate(results):
                 if result is None:
                     results[i] = TimeoutError(f"Request timed out after {timeout} seconds")
-                    
+
             return results
 ```
 
@@ -601,7 +601,7 @@ class Pynector:
         if self._owns_transport and self._transport is not None:
             if self._logger:
                 self._logger.info("client.closing")
-                
+
             try:
                 await self._transport.disconnect()
                 if self._logger:
@@ -647,32 +647,32 @@ async def request_with_retry(
     **options
 ) -> Any:
     """Send a request with retry for transient errors.
-    
+
     Args:
         data: The data to send
         max_retries: The maximum number of retry attempts
         retry_delay: The initial delay between retries (will be exponentially increased)
         **options: Additional options for the request
-        
+
     Returns:
         The response data
-        
+
     Raises:
         TransportError: If all retry attempts fail
         TimeoutError: If the request times out after all retry attempts
         PynectorError: For other errors
     """
     last_error = None
-    
+
     # Start span if tracing is enabled
     if self._tracer:
         with self._tracer.start_as_current_span("pynector.request_with_retry") as span:
             span.set_attribute("max_retries", max_retries)
             span.set_attribute("retry_delay", retry_delay)
-            
+
             for attempt in range(max_retries):
                 span.set_attribute("attempt", attempt + 1)
-                
+
                 try:
                     result = await self.request(data, **options)
                     span.set_attribute("successful_attempt", attempt + 1)
@@ -680,17 +680,17 @@ async def request_with_retry(
                 except TransportError as e:
                     last_error = e
                     span.record_exception(e)
-                    
+
                     if attempt < max_retries - 1:
                         # Calculate backoff delay
                         delay = retry_delay * (2 ** attempt)
                         span.set_attribute(f"retry_delay_{attempt}", delay)
-                        
+
                         # Wait before retrying
                         await anyio.sleep(delay)
                     else:
                         break
-            
+
             # If we get here, all retries failed
             raise last_error
     else:
@@ -700,13 +700,13 @@ async def request_with_retry(
                 return await self.request(data, **options)
             except TransportError as e:
                 last_error = e
-                
+
                 if attempt < max_retries - 1:
                     # Wait before retrying (with exponential backoff)
                     await anyio.sleep(retry_delay * (2 ** attempt))
                 else:
                     break
-        
+
         # If we get here, all retries failed
         raise last_error
 ```

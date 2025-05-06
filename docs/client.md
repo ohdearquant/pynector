@@ -1,15 +1,22 @@
 # Core Pynector Client
 
-The `Pynector` class is the main entry point for using the Pynector library. It provides a high-level interface that integrates the Transport Abstraction Layer, Structured Concurrency, and Optional Observability components into a cohesive, user-friendly API.
+The `Pynector` class is the main entry point for using the Pynector library. It
+provides a high-level interface that integrates the Transport Abstraction Layer,
+Structured Concurrency, and Optional Observability components into a cohesive,
+user-friendly API.
 
 ## Key Features
 
-- **Flexible Transport Integration**: Works with both built-in and custom transports
-- **Efficient Batch Processing**: Parallel request processing with concurrency limits
-- **Optional Observability**: Integrated tracing and logging with no-op fallbacks
+- **Flexible Transport Integration**: Works with both built-in and custom
+  transports
+- **Efficient Batch Processing**: Parallel request processing with concurrency
+  limits
+- **Optional Observability**: Integrated tracing and logging with no-op
+  fallbacks
 - **Resource Safety**: Proper async resource management with context managers
 - **Robust Error Handling**: Specific exception types and retry mechanisms
-- **Configuration Hierarchy**: Supports instance config, environment variables, and defaults
+- **Configuration Hierarchy**: Supports instance config, environment variables,
+  and defaults
 
 ## Installation
 
@@ -140,15 +147,15 @@ class MyCustomTransport(Transport):
     async def connect(self) -> None:
         # Implementation
         pass
-        
+
     async def disconnect(self) -> None:
         # Implementation
         pass
-        
+
     async def send(self, data, **options) -> None:
         # Implementation
         pass
-        
+
     async def receive(self):
         # Implementation
         yield b"response data"
@@ -215,7 +222,8 @@ client = Pynector(
 
 ## Error Handling
 
-The Pynector client provides a comprehensive error hierarchy for handling different types of errors:
+The Pynector client provides a comprehensive error hierarchy for handling
+different types of errors:
 
 ```python
 from pynector.errors import (
@@ -351,11 +359,14 @@ class Pynector:
 
 ### Concurrency Limits
 
-When using `batch_request`, the `max_concurrency` parameter controls how many requests can be processed concurrently. This is important for:
+When using `batch_request`, the `max_concurrency` parameter controls how many
+requests can be processed concurrently. This is important for:
 
-1. **Resource Management**: Prevents overwhelming the system with too many concurrent connections
+1. **Resource Management**: Prevents overwhelming the system with too many
+   concurrent connections
 2. **Rate Limiting**: Helps stay within API rate limits
-3. **Performance Optimization**: Finding the optimal concurrency level for your specific workload
+3. **Performance Optimization**: Finding the optimal concurrency level for your
+   specific workload
 
 ```python
 # Example: Finding optimal concurrency
@@ -365,21 +376,21 @@ from pynector import Pynector
 
 async def benchmark_concurrency():
     client = Pynector(transport_type="http", base_url="https://api.example.com")
-    
+
     # Create a batch of 100 requests
     requests = [({"path": "/test", "method": "GET"}, {}) for _ in range(100)]
-    
+
     # Test different concurrency limits
     concurrency_limits = [1, 5, 10, 20, 50, 100]
     results = []
-    
+
     for limit in concurrency_limits:
         start_time = time.time()
         await client.batch_request(requests, max_concurrency=limit)
         duration = time.time() - start_time
         results.append((limit, duration))
         print(f"Concurrency {limit}: {duration:.2f} seconds")
-    
+
     await client.aclose()
     return results
 
@@ -388,7 +399,8 @@ asyncio.run(benchmark_concurrency())
 
 ### Timeout Handling
 
-Proper timeout handling is crucial for preventing resource leaks and ensuring responsiveness:
+Proper timeout handling is crucial for preventing resource leaks and ensuring
+responsiveness:
 
 ```python
 # Global timeout in configuration
@@ -463,3 +475,4 @@ client = Pynector(
 # - Create a span with request/response attributes
 # - Log request start/completion/errors
 # - Propagate trace context
+```
