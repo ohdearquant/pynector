@@ -1,7 +1,8 @@
 # Pynector
 
 Pynector is a Python library that provides a flexible, maintainable, and
-type-safe interface for network communication with optional observability features and structured concurrency.
+type-safe interface for network communication with optional observability
+features and structured concurrency.
 
 ## Structured Concurrency
 
@@ -150,7 +151,9 @@ For more detailed documentation, see the
 
 ## Optional Observability
 
-The Optional Observability module provides telemetry features for tracing and logging with minimal dependencies. It follows a design that makes OpenTelemetry and structlog optional dependencies with no-op fallbacks.
+The Optional Observability module provides telemetry features for tracing and
+logging with minimal dependencies. It follows a design that makes OpenTelemetry
+and structlog optional dependencies with no-op fallbacks.
 
 ### Key Features
 

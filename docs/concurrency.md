@@ -98,13 +98,13 @@ async def main():
         # Do something
         if condition:
             scope.cancel()  # Cancel all tasks in this scope
-    
+
     # Using timeout utilities
     with move_on_after(5) as scope:  # Continue after 5 seconds
         await long_running_operation()
         if scope.cancelled_caught:
             print("Operation timed out")
-    
+
     # Using fail_after to raise TimeoutError
     try:
         with fail_after(5):  # Raise TimeoutError after 5 seconds
@@ -127,7 +127,7 @@ from pynector.concurrency import Lock
 
 async def main():
     lock = Lock()
-    
+
     async with lock:
         # Critical section
         # Only one task can execute this at a time
@@ -142,7 +142,7 @@ from pynector.concurrency import Semaphore
 
 async def main():
     semaphore = Semaphore(3)  # Allow up to 3 concurrent accesses
-    
+
     async with semaphore:
         # Up to 3 tasks can execute this concurrently
 ```
@@ -156,7 +156,7 @@ from pynector.concurrency import CapacityLimiter
 
 async def main():
     limiter = CapacityLimiter(10)  # Allow up to 10 concurrent operations
-    
+
     async with limiter:
         # Up to 10 tasks can execute this concurrently
 ```
@@ -170,10 +170,10 @@ from pynector.concurrency import Event
 
 async def main():
     event = Event()
-    
+
     # In one task
     await event.wait()  # Wait until the event is set
-    
+
     # In another task
     event.set()  # Allow waiting tasks to proceed
 ```
@@ -187,10 +187,10 @@ from pynector.concurrency import Condition, Lock
 
 async def main():
     condition = Condition(Lock())
-    
+
     async with condition:
         await condition.wait()  # Wait for a notification
-    
+
     async with condition:
         await condition.notify()  # Notify one waiting task
         # or
@@ -208,13 +208,13 @@ from pynector.concurrency import get_cancelled_exc_class, shield
 async def main():
     # Get the exception class used for cancellation
     cancelled_exc_class = get_cancelled_exc_class()
-    
+
     try:
         # Do something
         pass
     except cancelled_exc_class:
         print("Task was cancelled")
-    
+
     # Shield a task from cancellation
     result = await shield(critical_operation)
 ```
@@ -236,11 +236,11 @@ async def create_connection():
 
 async def main():
     pool = ConnectionPool(max_connections=10, connection_factory=create_connection)
-    
+
     async with pool as p:
         # Acquire a connection
         conn = await p.acquire()
-        
+
         try:
             # Use the connection
             pass
@@ -263,7 +263,7 @@ async def fetch(url):
 async def main():
     urls = ["https://example.com", "https://example.org", "https://example.net"]
     responses = await parallel_requests(urls, fetch, max_concurrency=5)
-    
+
     for response in responses:
         print(response)
 ```
@@ -306,9 +306,9 @@ async def process_item(item):
 
 async def main():
     pool = WorkerPool(num_workers=5, worker_func=process_item)
-    
+
     await pool.start()
-    
+
     try:
         # Submit items for processing
         for item in items:
@@ -343,7 +343,7 @@ async def main():
         await tg.start_soon(task1)
         await tg.start_soon(task2)
         print("All tasks started")
-    
+
     print("All tasks completed")
 
 asyncio.run(main())
@@ -369,9 +369,9 @@ async def main():
         await long_running_task()
         if scope.cancelled_caught:
             print("Task was cancelled after timeout")
-    
+
     print("Continued execution after timeout")
-    
+
     # Using fail_after
     print("\nUsing fail_after:")
     try:
@@ -379,7 +379,7 @@ async def main():
             await long_running_task()
     except TimeoutError:
         print("TimeoutError was raised")
-    
+
     print("Continued execution after timeout exception")
 
 asyncio.run(main())
@@ -420,13 +420,13 @@ async def main():
     tasks = [task_with_lock(lock, i) for i in range(5)]
     await asyncio.gather(*tasks)
     print(f"Shared resource: {shared_resource}\n")
-    
+
     # Using Semaphore
     semaphore = Semaphore(3)  # Allow up to 3 concurrent tasks
     tasks = [task_with_semaphore(semaphore, i) for i in range(5)]
     await asyncio.gather(*tasks)
     print()
-    
+
     # Using CapacityLimiter
     limiter = CapacityLimiter(2)  # Allow up to 2 concurrent tasks
     tasks = [task_with_limiter(limiter, i) for i in range(5)]
@@ -458,12 +458,12 @@ async def main():
     # Using parallel_requests
     urls = ["https://example.com", "https://example.org", "https://example.net"]
     responses = await parallel_requests(urls, fetch, max_concurrency=2)
-    
+
     for url, response in zip(urls, responses):
         print(f"{url} -> {response}")
-    
+
     print()
-    
+
     # Using retry_with_timeout
     try:
         result = await retry_with_timeout(
@@ -514,7 +514,7 @@ async def main():
             await tg.start_soon(asyncio.sleep, 2)
     except ValueError as e:
         print(f"Caught error from task: {e}")
-    
+
     # Handling cancellation
     try:
         async with create_task_group() as tg:
@@ -523,7 +523,7 @@ async def main():
             # The task group will be cancelled when we exit the context
     except Exception as e:
         print(f"Caught exception: {e}")
-    
+
     # Shielding from cancellation
     try:
         async with create_task_group() as tg:

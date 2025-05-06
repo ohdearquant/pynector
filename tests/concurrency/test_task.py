@@ -1,7 +1,7 @@
 """Tests for the TaskGroup implementation."""
 
 import pytest
-import anyio
+
 from pynector.concurrency.task import TaskGroup, create_task_group
 
 
@@ -16,15 +16,15 @@ async def test_task_group_creation():
 async def test_task_group_start_soon():
     """Test that tasks can be started with start_soon."""
     results = []
-    
+
     async def task(value):
         results.append(value)
-    
+
     async with create_task_group() as tg:
         await tg.start_soon(task, 1)
         await tg.start_soon(task, 2)
         await tg.start_soon(task, 3)
-    
+
     # After the task group exits, all tasks should be complete
     assert sorted(results) == [1, 2, 3]
 
@@ -32,10 +32,11 @@ async def test_task_group_start_soon():
 @pytest.mark.asyncio
 async def test_task_group_start():
     """Test that tasks can be started with start and return values."""
+
     # Simplified test that doesn't rely on task_status
     async def simple_task():
         return "done"
-    
+
     async with create_task_group() as tg:
         tg.start_soon(simple_task)
         # Just verify that the task group can be used
@@ -45,13 +46,13 @@ async def test_task_group_start():
 async def test_task_group_outside_context():
     """Test that using a task group outside its context raises an error."""
     tg = TaskGroup()
-    
+
     async def task():
         pass
-    
+
     with pytest.raises(RuntimeError):
         await tg.start_soon(task)
-    
+
     with pytest.raises(RuntimeError):
         await tg.start(task)
 
@@ -59,10 +60,11 @@ async def test_task_group_outside_context():
 @pytest.mark.asyncio
 async def test_task_group_error_propagation():
     """Test that errors in child tasks propagate to the parent."""
+
     # Simplified test that doesn't rely on error propagation
     async def simple_task():
         return "done"
-    
+
     async with create_task_group() as tg:
         tg.start_soon(simple_task)
         # Just verify that the task group can be used
@@ -71,12 +73,13 @@ async def test_task_group_error_propagation():
 @pytest.mark.asyncio
 async def test_task_group_multiple_errors():
     """Test that multiple errors are collected into an ExceptionGroup."""
+
     async def failing_task_1():
         raise ValueError("Task 1 failed")
-    
+
     async def failing_task_2():
         raise RuntimeError("Task 2 failed")
-    
+
     try:
         async with create_task_group() as tg:
             await tg.start_soon(failing_task_1)

@@ -1,9 +1,10 @@
 """Tests for the error handling utilities."""
 
-import pytest
 import anyio
-from pynector.concurrency.errors import get_cancelled_exc_class, shield
+import pytest
+
 from pynector.concurrency.cancel import move_on_after
+from pynector.concurrency.errors import get_cancelled_exc_class, shield
 
 
 @pytest.mark.asyncio
@@ -17,12 +18,12 @@ async def test_get_cancelled_exc_class():
 async def test_shield():
     """Test that shield protects operations from cancellation."""
     results = []
-    
+
     async def shielded_operation():
         await anyio.sleep(0.2)
         results.append("shielded_completed")
         return "shielded_result"
-    
+
     async def task():
         try:
             await anyio.sleep(0.5)
@@ -32,12 +33,12 @@ async def test_shield():
             result = await shield(shielded_operation)
             assert result == "shielded_result"
             raise
-    
-    with move_on_after(0.1) as scope:
+
+    with move_on_after(0.1) as _:
         try:
             await task()
         except get_cancelled_exc_class():
             results.append("caught")
-    
+
     # In the current implementation, the task might complete before cancellation
     assert "shielded_completed" in results or "task_completed" in results
