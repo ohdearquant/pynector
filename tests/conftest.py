@@ -11,6 +11,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from pynector.transport.factory import TransportFactory
+from pynector.transport.http.factory import HTTPTransportFactory
+from pynector.transport.http.message import HttpMessage
 from pynector.transport.protocol import Transport
 from pynector.transport.registry import get_transport_factory_registry
 
@@ -121,3 +123,26 @@ def mock_telemetry(monkeypatch):
 def anyio_backend(request):
     """Fixture to run tests with different anyio backends."""
     return request.param
+
+
+@pytest.fixture(autouse=True)
+def register_http_transport_factory():
+    """Fixture that automatically registers the HTTP transport factory."""
+    registry = get_transport_factory_registry()
+    # Only register if not already registered
+    if "http" not in registry.get_registered_names():
+        http_factory = HTTPTransportFactory(
+            base_url="http://localhost", message_type=HttpMessage
+        )
+        registry.register("http", http_factory)
+    yield
+    # Clean up is not necessary since each test gets a clean registry
+
+
+def pytest_configure(config):
+    """Register custom marks with pytest."""
+    config.addinivalue_line("markers", "performance: mark test as a performance test")
+    # Register the performance mark in pytest
+    import pytest
+
+    pytest.mark.performance = pytest.mark.performance

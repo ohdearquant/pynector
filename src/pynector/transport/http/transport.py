@@ -235,15 +235,27 @@ class HTTPTransport(Transport[T], Generic[T]):
         """Extract headers from the message.
 
         Args:
-            message: The message to extract headers from
+            message: The message to extract headers from (HttpMessage or dict)
 
         Returns:
             A dictionary of header name to header value
         """
         # Merge default headers with message headers
         # Convert any non-string values to strings
-        message_headers = message.get_headers()
         headers = {**self.headers}
+
+        # Handle different message types (HttpMessage or dict)
+        if hasattr(message, "get_headers") and callable(
+            getattr(message, "get_headers")
+        ):
+            # HttpMessage object
+            message_headers = message.get_headers()
+        elif isinstance(message, dict) and "headers" in message:
+            # Dictionary with headers field
+            message_headers = message["headers"]
+        else:
+            # No headers or dictionary without headers field
+            message_headers = {}
 
         for name, value in message_headers.items():
             if isinstance(value, str):
@@ -263,7 +275,7 @@ class HTTPTransport(Transport[T], Generic[T]):
         """Prepare request parameters from the message.
 
         Args:
-            message: The message to prepare request parameters from
+            message: The message to prepare request parameters from (HttpMessage or dict)
 
         Returns:
             A tuple of (method, url, request_kwargs)
@@ -273,24 +285,50 @@ class HTTPTransport(Transport[T], Generic[T]):
         url = ""
         request_kwargs = {}
 
-        # Extract method, url, and other parameters from message
-        payload = message.get_payload()
+        # Handle different message types (HttpMessage object or dict)
+        if hasattr(message, "get_payload") and callable(
+            getattr(message, "get_payload")
+        ):
+            # Extract data from HttpMessage object
+            payload = message.get_payload()
+            if isinstance(payload, dict):
+                method = payload.get("method", method).upper()
+                url = payload.get("url", payload.get("path", url))
+                # Extract additional kwargs for the request
+                for key, value in payload.items():
+                    if key not in ("method", "url", "path"):
+                        request_kwargs[key] = value
+        elif isinstance(message, dict):
+            # Handle dict message directly
+            method = message.get("method", method).upper()
+            url = message.get("url", message.get("path", url))
 
-        if isinstance(payload, dict):
-            method = payload.get("method", method).upper()
-            url = payload.get("url", url)
+            # Extract common HTTP parameters that might be in message
+            if "params" in message:
+                request_kwargs["params"] = message["params"]
 
-            # Extract common HTTP parameters
-            if "params" in payload:
-                request_kwargs["params"] = payload["params"]
-            if "json" in payload:
-                request_kwargs["json"] = payload["json"]
-            if "data" in payload:
-                request_kwargs["data"] = payload["data"]
-            if "files" in payload:
-                request_kwargs["files"] = payload["files"]
-            if "content" in payload and isinstance(payload["content"], bytes):
-                request_kwargs["content"] = payload["content"]
+            if "json" in message:
+                request_kwargs["json"] = message["json"]
+
+            if "data" in message:
+                request_kwargs["data"] = message["data"]
+
+            if "files" in message:
+                request_kwargs["files"] = message["files"]
+
+            # Extract additional kwargs for the request
+            for key, value in message.items():
+                if key not in (
+                    "method",
+                    "url",
+                    "path",
+                    "headers",
+                    "params",
+                    "json",
+                    "data",
+                    "files",
+                ):
+                    request_kwargs[key] = value
 
         return method, url, request_kwargs
 
