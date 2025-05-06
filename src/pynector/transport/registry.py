@@ -57,10 +57,10 @@ class TransportFactoryRegistry:
         """
         factory = self.get(name)
         return factory.create_transport(**kwargs)
-        
-    def get_registered_names(self) -> List[str]:
+
+    def get_registered_names(self) -> list[str]:
         """Get a list of all registered factory names.
-        
+
         Returns:
             A list of all registered factory names.
         """
@@ -73,14 +73,14 @@ _registry = None
 
 def get_transport_factory_registry() -> TransportFactoryRegistry:
     """Get the global transport factory registry.
-    
+
     Returns:
         The global transport factory registry.
     """
     global _registry
     if _registry is None:
         _registry = TransportFactoryRegistry()
-        
+
         # Try to register built-in transport factories
         # We use importlib to avoid issues with circular imports
         # or missing optional dependencies
@@ -91,7 +91,7 @@ def get_transport_factory_registry() -> TransportFactoryRegistry:
         except (ImportError, AttributeError):
             # HTTP transport is optional
             pass
-            
+
         try:
             sdk_module = importlib.import_module("pynector.transport.sdk.factory")
             sdk_factory = getattr(sdk_module, "SdkTransportFactory")
@@ -99,5 +99,5 @@ def get_transport_factory_registry() -> TransportFactoryRegistry:
         except (ImportError, AttributeError):
             # SDK transport is optional
             pass
-        
+
     return _registry

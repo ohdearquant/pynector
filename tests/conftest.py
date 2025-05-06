@@ -4,22 +4,24 @@ Pytest configuration for pynector tests.
 This module contains fixtures and configuration for pytest.
 """
 
-import pytest
-import anyio
-from typing import Dict, Any, List, Optional, AsyncGenerator
-from unittest.mock import MagicMock, AsyncMock
+from typing import Any
+from collections.abc import AsyncGenerator
+from unittest.mock import AsyncMock, MagicMock
 
-from pynector.transport.protocol import Transport
+import pytest
+
 from pynector.transport.factory import TransportFactory
+from pynector.transport.protocol import Transport
 from pynector.transport.registry import get_transport_factory_registry
 
 # We don't need to define our own event_loop fixture as pytest-asyncio provides one
 # This was causing a deprecation warning
 
+
 # Mock Transport Protocol implementation
 class MockTransport(Transport):
     """Mock transport for testing."""
-    
+
     def __init__(self, responses=None, raise_on_connect=None, raise_on_send=None):
         self.responses = responses or [b"mock response"]
         self.raise_on_connect = raise_on_connect
@@ -29,56 +31,60 @@ class MockTransport(Transport):
         self.connect_count = 0
         self.disconnect_count = 0
         self.send_count = 0
-        
+
     async def connect(self) -> None:
         self.connect_count += 1
         if self.raise_on_connect:
             raise self.raise_on_connect
         self.connected = True
-        
+
     async def disconnect(self) -> None:
         self.disconnect_count += 1
         self.connected = False
-        
+
     async def send(self, message: Any, **options) -> None:
         self.send_count += 1
         if self.raise_on_send:
             raise self.raise_on_send
         self.sent_data.append((message, options))
-        
+
     async def receive(self) -> AsyncGenerator[bytes, None]:
         for response in self.responses:
             yield response
-            
-    async def __aenter__(self) -> 'MockTransport':
+
+    async def __aenter__(self) -> "MockTransport":
         await self.connect()
         return self
-        
+
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await self.disconnect()
+
 
 # Mock Transport Factory
 class MockTransportFactory(TransportFactory):
     """Mock transport factory for testing."""
-    
+
     def __init__(self, transport=None):
         self.transport = transport or MockTransport()
         self.create_count = 0
-        
+
     def create_transport(self, **kwargs) -> Transport:
         self.create_count += 1
         self.last_kwargs = kwargs
         return self.transport
+
 
 @pytest.fixture
 def mock_transport():
     """Fixture providing a mock transport."""
     return MockTransport()
 
+
 @pytest.fixture
 def mock_transport_factory(mock_transport):
     """Fixture providing a mock transport factory."""
     return MockTransportFactory(mock_transport)
+
 
 @pytest.fixture
 def register_mock_transport_factory(mock_transport_factory):
@@ -90,6 +96,7 @@ def register_mock_transport_factory(mock_transport_factory):
     if "mock" in registry._factories:
         del registry._factories["mock"]
 
+
 # Mock Telemetry
 @pytest.fixture
 def mock_telemetry(monkeypatch):
@@ -100,13 +107,14 @@ def mock_telemetry(monkeypatch):
     mock_span.__aenter__.return_value = mock_span
     mock_tracer.start_as_current_span.return_value = mock_span
     mock_tracer.start_span.return_value = mock_span
-    
+
     mock_logger = MagicMock()
-    
+
     mock_get_telemetry = MagicMock(return_value=(mock_tracer, mock_logger))
     monkeypatch.setattr("pynector.client.get_telemetry", mock_get_telemetry)
-    
+
     return mock_tracer, mock_logger
+
 
 # Anyio Backend Selection - only use asyncio
 @pytest.fixture(params=["asyncio"])
