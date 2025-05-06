@@ -1,5 +1,30 @@
 """
 Core Pynector client implementation.
+
+This module provides the main entry point for using the Pynector library. The `Pynector` class
+integrates the Transport Abstraction Layer, Structured Concurrency, and Optional Observability
+components into a cohesive, user-friendly API.
+
+The client supports:
+- Multiple transport types (HTTP, SDK, custom)
+- Batch request processing with concurrency control
+- Timeout handling and retry mechanisms
+- Optional telemetry with tracing and logging
+- Proper resource management with async context managers
+
+Basic usage:
+```python
+from pynector import Pynector
+
+async with Pynector(
+    transport_type="http",
+    base_url="https://api.example.com",
+    headers={"Content-Type": "application/json"}
+) as client:
+    response = await client.request({"path": "/users", "method": "GET"})
+```
+
+For more detailed documentation, see the client documentation in the docs/ directory.
 """
 
 from types import TracebackType
@@ -25,6 +50,17 @@ class Pynector:
     """
     The core client class for making requests through various transports with support for
     batch processing, timeouts, and optional observability.
+    
+    Key features:
+    - Flexible transport integration (HTTP, SDK, custom)
+    - Efficient batch processing with concurrency limits
+    - Timeout handling and retry mechanisms
+    - Optional telemetry with tracing and logging
+    - Proper resource management with async context managers
+    - Configuration hierarchy (instance, environment, defaults)
+    
+    The client can be used as an async context manager (recommended) or with explicit
+    resource management using the aclose() method.
     """
 
     def __init__(
@@ -152,17 +188,39 @@ class Pynector:
         """Send a single request and return the response.
 
         Args:
-            data: The data to send.
+            data: The data to send. The format depends on the transport type.
+                For HTTP transport, typically a dict with 'path', 'method', and optional
+                'params', 'headers', 'json', etc.
             timeout: Optional timeout in seconds for this specific request.
-            **options: Additional options for the request.
+                Overrides the global timeout from configuration.
+            **options: Additional options for the request, passed to the transport.
+                For HTTP transport, can include 'headers', 'params', etc.
 
         Returns:
-            The response data.
+            The response data. The format depends on the transport type.
+            For HTTP transport, typically a dict or bytes.
 
         Raises:
             TransportError: If there is an error with the transport.
             TimeoutError: If the request times out.
             PynectorError: For other errors.
+            
+        Example:
+            ```python
+            # Basic request
+            response = await client.request(
+                {"path": "/users", "method": "GET", "params": {"limit": 10}}
+            )
+            
+            # Request with timeout
+            try:
+                response = await client.request(
+                    {"path": "/users", "method": "GET"},
+                    timeout=5.0  # 5 second timeout
+                )
+            except TimeoutError:
+                print("Request timed out")
+            ```
         """
         # Start span if tracing is enabled
         if self._tracer:
@@ -289,19 +347,56 @@ class Pynector:
     ) -> list[Any]:
         """Send multiple requests in parallel and return the responses.
 
+        This method uses structured concurrency to process multiple requests in parallel,
+        with optional concurrency limits and timeout handling.
+
         Args:
-            requests: List of (data, options) tuples.
-            max_concurrency: Maximum number of concurrent requests.
-            timeout: Optional timeout in seconds for the entire batch.
-            raise_on_error: Whether to raise on the first error.
-            **options: Additional options for all requests.
+            requests: List of (data, options) tuples. Each tuple contains the data to send
+                and a dict of options specific to that request.
+            max_concurrency: Maximum number of concurrent requests. If None, all requests
+                are processed concurrently. Use this to limit resource usage or respect
+                rate limits.
+            timeout: Optional timeout in seconds for the entire batch. If the batch doesn't
+                complete within this time, remaining requests are cancelled.
+            raise_on_error: Whether to raise on the first error. If False (default), errors
+                are returned as exceptions in the result list. If True, the first error
+                encountered will be raised immediately.
+            **options: Additional options for all requests. These are merged with the
+                request-specific options, with request-specific options taking precedence.
 
         Returns:
-            List of responses or exceptions.
+            List of responses or exceptions. The list has the same length as the input
+            requests list, with responses in the same order. If a request fails and
+            raise_on_error is False, the corresponding item will be an exception.
 
         Raises:
             TimeoutError: If the batch times out and raise_on_error is True.
             PynectorError: For other errors if raise_on_error is True.
+            
+        Example:
+            ```python
+            # Create a batch of requests
+            requests = [
+                ({"path": "/users/1", "method": "GET"}, {}),
+                ({"path": "/users/2", "method": "GET"}, {}),
+                ({"path": "/users/3", "method": "GET"}, {})
+            ]
+
+            # Process requests in parallel with concurrency limit
+            responses = await client.batch_request(
+                requests,
+                max_concurrency=2,  # Process at most 2 requests at a time
+                timeout=10.0,       # 10 second timeout for the entire batch
+                raise_on_error=False  # Return exceptions instead of raising them
+            )
+
+            # Check results
+            for i, response in enumerate(responses):
+                if isinstance(response, Exception):
+                    print(f"Request {i} failed: {response}")
+                else:
+                    print(f"Request {i} succeeded: {response}")
+            ```
         """
         # Start span if tracing is enabled
         if self._tracer:
@@ -462,19 +557,37 @@ class Pynector:
     ) -> Any:
         """Send a request with retry for transient errors.
 
+        This method automatically retries requests that fail with TransportError,
+        using exponential backoff between attempts.
+
         Args:
-            data: The data to send
-            max_retries: The maximum number of retry attempts
-            retry_delay: The initial delay between retries (will be exponentially increased)
-            **options: Additional options for the request
+            data: The data to send. The format depends on the transport type.
+            max_retries: The maximum number of retry attempts. The total number of
+                attempts will be max_retries + 1 (the initial attempt plus retries).
+            retry_delay: The initial delay between retries in seconds. This delay
+                is exponentially increased for subsequent retries (1x, 2x, 4x, 8x, etc.).
+            **options: Additional options for the request, passed to the transport.
 
         Returns:
-            The response data
+            The response data. The format depends on the transport type.
 
         Raises:
             TransportError: If all retry attempts fail
             TimeoutError: If the request times out after all retry attempts
             PynectorError: For other errors
+            
+        Example:
+            ```python
+            # Request with retry for transient errors
+            try:
+                response = await client.request_with_retry(
+                    {"path": "/users", "method": "GET"},
+                    max_retries=3,
+                    retry_delay=1.0  # Initial delay, will increase exponentially
+                )
+            except TransportError as e:
+                print(f"All retry attempts failed: {e}")
+            ```
         """
         last_error = None
 
@@ -527,7 +640,26 @@ class Pynector:
             raise last_error
 
     async def aclose(self) -> None:
-        """Close the Pynector instance and release resources."""
+        """Close the Pynector instance and release resources.
+        
+        This method disconnects the transport if it is owned by this instance
+        (i.e., if it was created by this instance rather than passed in).
+        It should be called when the client is no longer needed to ensure
+        proper resource cleanup.
+        
+        Example:
+            ```python
+            client = Pynector(transport_type="http", base_url="https://api.example.com")
+            try:
+                response = await client.request({"path": "/users", "method": "GET"})
+            finally:
+                await client.aclose()  # Ensure resources are properly released
+            ```
+        
+        Note:
+            When using the client as an async context manager, this method is
+            called automatically when exiting the context.
+        """
         if self._owns_transport and self._transport is not None:
             if self._logger:
                 self._logger.info("client.closing")
@@ -547,7 +679,22 @@ class Pynector:
                 self._transport_initialized = False
 
     async def __aenter__(self) -> "Pynector":
-        """Enter the async context."""
+        """Enter the async context.
+        
+        Initializes and connects the transport if needed. This method is called
+        automatically when using the client as an async context manager.
+        
+        Example:
+            ```python
+            async with Pynector(transport_type="http", base_url="https://api.example.com") as client:
+                # Transport is automatically connected
+                response = await client.request({"path": "/users", "method": "GET"})
+                # Transport is automatically disconnected when exiting the context
+            ```
+        
+        Returns:
+            The Pynector instance.
+        """
         # Only get the transport, don't call __aenter__ on it again
         # since it will be connected in _get_transport
         await self._get_transport()
@@ -559,7 +706,15 @@ class Pynector:
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> None:
-        """Exit the async context."""
+        """Exit the async context.
+        
+        Disconnects the transport if it is owned by this instance and releases
+        resources. This method is called automatically when exiting the async
+        context manager.
+        
+        This ensures proper resource cleanup even if an exception occurs within
+        the context.
+        """
         if self._owns_transport and self._transport is not None:
             await self._transport.disconnect()
             self._transport = None
