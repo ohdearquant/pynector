@@ -6,9 +6,9 @@ httpx library, enabling efficient and reliable HTTP communication.
 """
 
 import asyncio
-import time
+import json
 from collections.abc import AsyncIterator
-from typing import Any, Dict, Generic, Optional, Set, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Generic, Optional, TypeVar, Union
 
 import httpx
 
@@ -36,21 +36,21 @@ T = TypeVar("T", bound=Message)
 
 class HTTPTransport(Transport[T], Generic[T]):
     """HTTP transport implementation using httpx.AsyncClient."""
-    
+
     def __init__(
         self,
         base_url: str = "",
-        headers: Optional[Dict[str, str]] = None,
+        headers: Optional[dict[str, str]] = None,
         timeout: Union[float, httpx.Timeout] = 10.0,
         max_retries: int = 3,
         retry_backoff_factor: float = 0.5,
-        retry_status_codes: Optional[Set[int]] = None,
+        retry_status_codes: Optional[set[int]] = None,
         follow_redirects: bool = True,
         verify_ssl: bool = True,
         http2: bool = False,
     ):
         """Initialize the transport with configuration options.
-        
+
         Args:
             base_url: The base URL for all requests
             headers: Default headers to include in all requests
@@ -72,14 +72,14 @@ class HTTPTransport(Transport[T], Generic[T]):
         self.follow_redirects = follow_redirects
         self.verify_ssl = verify_ssl
         self.http2 = http2
-        
+
         self._client: Optional[httpx.AsyncClient] = None
-        self._message_type: Optional[Type[T]] = None
+        self._message_type: Optional[type[T]] = None
         self._last_response: Optional[httpx.Response] = None
-    
+
     async def connect(self) -> None:
         """Establish the connection by initializing the AsyncClient.
-        
+
         Raises:
             ConnectionError: If the connection cannot be established
             ConnectionTimeoutError: If the connection attempt times out
@@ -100,19 +100,19 @@ class HTTPTransport(Transport[T], Generic[T]):
                 raise ConnectionTimeoutError(f"Connection attempt timed out: {e}")
             except Exception as e:
                 raise TransportError(f"Unexpected error during connection: {e}")
-    
+
     async def disconnect(self) -> None:
         """Close the connection by closing the AsyncClient."""
         if self._client is not None:
             await self._client.aclose()
             self._client = None
-    
+
     async def send(self, message: T) -> None:
         """Send a message over the HTTP transport.
-        
+
         Args:
             message: The message to send
-            
+
         Raises:
             ConnectionError: If the connection is closed or broken
             HTTPTransportError: For HTTP-specific errors
@@ -120,43 +120,45 @@ class HTTPTransport(Transport[T], Generic[T]):
         """
         if self._client is None:
             raise ConnectionError("Transport not connected")
-        
+
         # Store message type for deserialization
         if self._message_type is None:
             self._message_type = type(message)
-        
+
         # Extract request parameters from message
         headers = self._extract_headers(message)
         method, url, request_kwargs = self._prepare_request(message)
-        
+
         # Implement retry logic with exponential backoff
         retry_count = 0
         while True:
             try:
                 response = await self._client.request(
-                    method=method,
-                    url=url,
-                    headers=headers,
-                    **request_kwargs
+                    method=method, url=url, headers=headers, **request_kwargs
                 )
-                
+
                 # Store the response for later use in receive()
                 self._last_response = response
-                
+
                 # Raise for status but handle retryable errors separately
                 if response.status_code >= 400:
-                    if response.status_code in self.retry_status_codes and retry_count < self.max_retries:
+                    if (
+                        response.status_code in self.retry_status_codes
+                        and retry_count < self.max_retries
+                    ):
                         retry_count += 1
-                        backoff_time = self.retry_backoff_factor * (2 ** (retry_count - 1))
+                        backoff_time = self.retry_backoff_factor * (
+                            2 ** (retry_count - 1)
+                        )
                         await asyncio.sleep(backoff_time)
                         continue
-                    
+
                     # Map HTTP status codes to appropriate exceptions
                     self._handle_error_response(response)
-                
+
                 # Success
                 break
-                
+
             except (httpx.ConnectError, httpx.ReadTimeout, httpx.WriteTimeout) as e:
                 # Network-related errors (potentially transient)
                 retry_count += 1
@@ -167,16 +169,16 @@ class HTTPTransport(Transport[T], Generic[T]):
                         raise ConnectionTimeoutError(f"Request timed out: {e}")
                     else:
                         raise HTTPTransportError(f"HTTP request failed: {e}")
-                
+
                 backoff_time = self.retry_backoff_factor * (2 ** (retry_count - 1))
                 await asyncio.sleep(backoff_time)
-    
+
     async def receive(self) -> AsyncIterator[T]:
         """Receive messages from the HTTP transport.
-        
+
         Returns:
             An async iterator yielding messages as they are received
-            
+
         Raises:
             ConnectionError: If the connection is closed or broken
             HTTPTransportError: For HTTP-specific errors
@@ -184,10 +186,10 @@ class HTTPTransport(Transport[T], Generic[T]):
         """
         if self._client is None:
             raise ConnectionError("Transport not connected")
-        
+
         if self._message_type is None:
             raise HTTPTransportError("No message type has been set")
-        
+
         # For HTTP, receive is typically called after a send and yields a single response
         response_data = await self._get_next_response()
         if response_data:
@@ -196,19 +198,19 @@ class HTTPTransport(Transport[T], Generic[T]):
                 yield message
             except Exception as e:
                 raise MessageError(f"Failed to deserialize message: {e}")
-    
+
     async def _get_next_response(self) -> Optional[bytes]:
         """Get the next response from the HTTP transport.
-        
+
         Returns:
             The response data as bytes, or None if no response is available
-            
+
         Raises:
             HTTPTransportError: If there is an error getting the response
         """
         if self._last_response is None:
             return None
-        
+
         try:
             # Create a message that matches the HttpMessage format
             # Extract JSON data if possible
@@ -216,25 +218,25 @@ class HTTPTransport(Transport[T], Generic[T]):
                 data = self._last_response.json()
             except Exception:
                 data = self._last_response.text
-                
+
             response_data = {
                 "headers": dict(self._last_response.headers),
                 "payload": {
                     "method": "GET",  # Default method for responses
                     "url": str(self._last_response.url),
                     "data": data,
-                }
+                },
             }
             return json.dumps(response_data).encode("utf-8")
         except Exception as e:
             raise HTTPTransportError(f"Failed to process response: {e}")
-    
-    def _extract_headers(self, message: T) -> Dict[str, str]:
+
+    def _extract_headers(self, message: T) -> dict[str, str]:
         """Extract headers from the message.
-        
+
         Args:
             message: The message to extract headers from
-            
+
         Returns:
             A dictionary of header name to header value
         """
@@ -242,25 +244,27 @@ class HTTPTransport(Transport[T], Generic[T]):
         # Convert any non-string values to strings
         message_headers = message.get_headers()
         headers = {**self.headers}
-        
+
         for name, value in message_headers.items():
             if isinstance(value, str):
                 headers[name] = value
             else:
                 headers[name] = str(value)
-        
+
         # Set content-type if not already set
-        if hasattr(message, "content_type") and "content-type" not in {k.lower() for k in headers}:
+        if hasattr(message, "content_type") and "content-type" not in {
+            k.lower() for k in headers
+        }:
             headers["Content-Type"] = getattr(message, "content_type")
-        
+
         return headers
-    
-    def _prepare_request(self, message: T) -> Tuple[str, str, Dict[str, Any]]:
+
+    def _prepare_request(self, message: T) -> tuple[str, str, dict[str, Any]]:
         """Prepare request parameters from the message.
-        
+
         Args:
             message: The message to prepare request parameters from
-            
+
         Returns:
             A tuple of (method, url, request_kwargs)
         """
@@ -268,14 +272,14 @@ class HTTPTransport(Transport[T], Generic[T]):
         method = "POST"
         url = ""
         request_kwargs = {}
-        
+
         # Extract method, url, and other parameters from message
         payload = message.get_payload()
-        
+
         if isinstance(payload, dict):
             method = payload.get("method", method).upper()
             url = payload.get("url", url)
-            
+
             # Extract common HTTP parameters
             if "params" in payload:
                 request_kwargs["params"] = payload["params"]
@@ -287,73 +291,76 @@ class HTTPTransport(Transport[T], Generic[T]):
                 request_kwargs["files"] = payload["files"]
             if "content" in payload and isinstance(payload["content"], bytes):
                 request_kwargs["content"] = payload["content"]
-        
+
         return method, url, request_kwargs
-    
+
     def _handle_error_response(self, response: httpx.Response) -> None:
         """Handle error responses by raising appropriate exceptions.
-        
+
         Args:
             response: The error response
-            
+
         Raises:
             HTTPTransportError: With appropriate status code and message
         """
         http_error = HTTPStatusError(
             response=response,
-            message=f"HTTP error {response.status_code}: {response.reason_phrase}"
+            message=f"HTTP error {response.status_code}: {response.reason_phrase}",
         )
-        
+
         # Map HTTP status codes to specific error types
         if response.status_code == 401:
-            raise HTTPUnauthorizedError(response, f"Unauthorized: {response.reason_phrase}")
+            raise HTTPUnauthorizedError(
+                response, f"Unauthorized: {response.reason_phrase}"
+            )
         elif response.status_code == 403:
             raise HTTPForbiddenError(response, f"Forbidden: {response.reason_phrase}")
         elif response.status_code == 404:
             raise HTTPNotFoundError(response, f"Not found: {response.reason_phrase}")
         elif response.status_code == 408:
-            raise HTTPTimeoutError(response, f"Request timeout: {response.reason_phrase}")
+            raise HTTPTimeoutError(
+                response, f"Request timeout: {response.reason_phrase}"
+            )
         elif response.status_code == 429:
-            raise HTTPTooManyRequestsError(response, f"Too many requests: {response.reason_phrase}")
+            raise HTTPTooManyRequestsError(
+                response, f"Too many requests: {response.reason_phrase}"
+            )
         elif 400 <= response.status_code < 500:
             raise HTTPClientError(response, f"Client error: {response.reason_phrase}")
         elif 500 <= response.status_code < 600:
             raise HTTPServerError(response, f"Server error: {response.reason_phrase}")
         else:
             raise http_error
-    
+
     async def stream_response(self, message: T) -> AsyncIterator[bytes]:
         """Stream a response from the HTTP transport.
-        
+
         Args:
             message: The message to send
-            
+
         Returns:
             An async iterator yielding chunks of the response as they are received
-            
+
         Raises:
             ConnectionError: If the connection is closed or broken
             HTTPTransportError: For HTTP-specific errors
         """
         if self._client is None:
             raise ConnectionError("Transport not connected")
-        
+
         # Extract request parameters from message
         headers = self._extract_headers(message)
         method, url, request_kwargs = self._prepare_request(message)
-        
+
         # Don't set streaming mode as a parameter - it's implied by using the stream() method
-        
+
         try:
             async with self._client.stream(
-                method=method,
-                url=url,
-                headers=headers,
-                **request_kwargs
+                method=method, url=url, headers=headers, **request_kwargs
             ) as response:
                 if response.status_code >= 400:
                     self._handle_error_response(response)
-                
+
                 # In httpx, aiter_bytes() returns an async iterator
                 async for chunk in response.aiter_bytes():
                     yield chunk
@@ -365,24 +372,20 @@ class HTTPTransport(Transport[T], Generic[T]):
             raise ConnectionTimeoutError(f"Request timed out: {e}")
         except Exception as e:
             raise HTTPTransportError(f"HTTP request failed: {e}")
-    
-    async def __aenter__(self) -> 'HTTPTransport[T]':
+
+    async def __aenter__(self) -> "HTTPTransport[T]":
         """Enter the async context, establishing the connection.
-        
+
         Returns:
             The transport instance
-            
+
         Raises:
             ConnectionError: If the connection cannot be established
             ConnectionTimeoutError: If the connection attempt times out
         """
         await self.connect()
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit the async context, closing the connection."""
         await self.disconnect()
-
-
-# Import json here to avoid circular imports
-import json
