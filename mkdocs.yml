@@ -1,0 +1,98 @@
+# Project information
+site_name: Pynector
+site_description: Python Connector Library Documentation
+site_author: Pynector Team
+site_url: https://pynector.org
+
+# Repository
+repo_name: ohdearquant/pynector
+repo_url: https://github.com/ohdearquant/pynector
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2025 Pynector Team
+
+# Configuration
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.expand
+    - navigation.indexes
+    - content.code.copy
+    - content.code.annotate
+    - search.highlight
+    - search.share
+  icon:
+    repo: fontawesome/brands/github
+
+# Plugins
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: true
+            heading_level: 3
+            show_category_heading: true
+            show_submodules: true
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+# Navigation structure
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quick-start.md
+  - API Reference:
+      - Client: client.md
+      - Concurrency: concurrency.md
+      - Transport:
+          - Overview: transport.md
+          - HTTP Transport: http_transport.md
+          - SDK Transport: sdk_transport.md
+      - Observability: observability.md
+  - Development:
+      - Contributing: development/contributing.md
+      - Code of Conduct: development/code-of-conduct.md
+      - Architecture: development/architecture.md
+  - Changelog: changelog.md
