@@ -65,12 +65,19 @@ otlp = [
     "opentelemetry-exporter-otlp>=1.32.1",
 ]
 
+sdk = [
+    "openai>=1.12.0",
+    "anthropic>=0.8.0",
+]
+
 all = [
     "opentelemetry-api>=1.26.0",
     "opentelemetry-sdk>=1.26.0",
     "structlog>=25.3.0",
     "opentelemetry-exporter-zipkin>=1.11.1",
     "opentelemetry-exporter-otlp>=1.32.1",
+    "openai>=1.12.0",
+    "anthropic>=0.8.0",
 ]
 
 
