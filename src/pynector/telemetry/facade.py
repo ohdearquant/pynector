@@ -33,10 +33,6 @@ else:
         return {}
 
 
-# Import structlog at module level for patching in tests
-if HAS_STRUCTLOG:
-    import structlog
-
 
 class TracingFacade:
     """Facade for tracing operations."""
