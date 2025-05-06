@@ -20,7 +20,9 @@ class MockHTTPServer:
         self.routes: dict[str, tuple[Any, int]] = {}
         self.runner: Optional[web.AppRunner] = None
         self.site: Optional[web.TCPSite] = None
-        self.url: Optional[str] = None
+        self.url: str = "http://localhost:8080"  # Default fallback URL
+        self.base_url: str = "http://localhost:8080"  # Default fallback URL
+        self.requests = []  # Store received requests for verification
 
     async def __aenter__(self) -> "MockHTTPServer":
         """Start the server.
@@ -55,9 +57,20 @@ class MockHTTPServer:
             if socket is not None:
                 # getsockname() might return more than 2 values, but we only need host and port
                 sockname = socket.getsockname()
-                host = sockname[0]
-                port = sockname[1]
-                self.url = f"http://{host}:{port}"
+                # Always use localhost rather than 0.0.0.0 or other formats for better compatibility
+                host = "localhost"
+                port = sockname[1]  # Get port from the socket
+
+                # Ensure port is a simple integer
+                if isinstance(port, int) and port > 0:
+                    self.url = f"http://{host}:{port}"
+                    self.base_url = (
+                        self.url
+                    )  # Alias for compatibility with tests expecting base_url
+                else:
+                    # Fallback to a safe default if port is malformed
+                    self.url = "http://localhost:8080"
+                    self.base_url = self.url
 
         return self
 
@@ -97,6 +110,30 @@ class MockHTTPServer:
             self.streaming_routes = {}
         self.streaming_routes[path] = streaming_handler
 
+    def add_json_response(
+        self, path: str, data: Any, status_code: int = 200, delay: float = 0
+    ) -> None:
+        """Add a JSON response to the server.
+
+        Args:
+            path: The URL path
+            data: The JSON data to return
+            status_code: The HTTP status code to return
+            delay: Optional delay in seconds before responding
+        """
+        # Store the handler with delay if specified
+        if delay > 0:
+
+            async def delayed_handler():
+                import asyncio
+
+                await asyncio.sleep(delay)
+                return data
+
+            self.routes[path] = (delayed_handler, status_code)
+        else:
+            self.routes[path] = (data, status_code)
+
     def _create_handler(
         self, handler: Any, status_code: int
     ) -> Callable[[web.Request], web.Response]:
@@ -114,8 +151,31 @@ class MockHTTPServer:
             # Log the request for debugging
             print(f"Mock server received request: {request.method} {request.path}")
 
+            # Store request information for test verification
+            self.requests.append(
+                {
+                    "method": request.method,
+                    "path": request.path_qs,
+                    "headers": dict(request.headers),
+                }
+            )
+
+            # Get request body if any
+            try:
+                body = await request.json()
+                self.requests[-1]["body"] = body
+            except Exception:
+                # Ignore errors in parsing the body
+                pass
+
             # Process the request
-            result = handler() if callable(handler) else handler
+            result = (
+                await handler()
+                if asyncio.iscoroutinefunction(handler)
+                else handler()
+                if callable(handler)
+                else handler
+            )
 
             # Create and return the response
             response = web.json_response(result, status=status_code)
@@ -126,3 +186,7 @@ class MockHTTPServer:
             return response
 
         return request_handler
+
+
+# Alias for backward compatibility
+MockHttpServer = MockHTTPServer

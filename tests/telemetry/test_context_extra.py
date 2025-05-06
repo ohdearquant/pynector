@@ -10,12 +10,12 @@ def test_dummy_context_functions():
     """Test the dummy context functions when OpenTelemetry is not available."""
     # We need to patch the actual implementation, not just the flag
     with (
-        patch("src.pynector.telemetry.context.HAS_OPENTELEMETRY", False),
-        patch("src.pynector.telemetry.context.attach", return_value=None),
-        patch("src.pynector.telemetry.context.detach"),
-        patch("src.pynector.telemetry.context.get_current", return_value={}),
+        patch("pynector.telemetry.context.HAS_OPENTELEMETRY", False),
+        patch("pynector.telemetry.context.attach", return_value=None),
+        patch("pynector.telemetry.context.detach"),
+        patch("pynector.telemetry.context.get_current", return_value={}),
     ):
-        from src.pynector.telemetry.context import attach, detach, get_current
+        from pynector.telemetry.context import attach, detach, get_current
 
         # Test with different types of arguments
         token = attach({"key": "value"})
@@ -41,9 +41,9 @@ def test_dummy_context_functions():
 async def test_traced_async_operation_no_otel():
     """Test traced_async_operation when OpenTelemetry is not available."""
     # Mock OpenTelemetry not available
-    with patch("src.pynector.telemetry.context.HAS_OPENTELEMETRY", False):
-        from src.pynector.telemetry.context import traced_async_operation
-        from src.pynector.telemetry.tracing import NoOpSpan
+    with patch("pynector.telemetry.context.HAS_OPENTELEMETRY", False):
+        from pynector.telemetry.context import traced_async_operation
+        from pynector.telemetry.tracing import NoOpSpan
 
         # Create a mock tracer that returns a NoOpSpan
         mock_tracer = MagicMock()
@@ -70,8 +70,8 @@ async def test_traced_async_operation_no_otel():
 async def test_traced_gather_no_otel():
     """Test traced_gather when OpenTelemetry is not available."""
     # Mock OpenTelemetry not available
-    with patch("src.pynector.telemetry.context.HAS_OPENTELEMETRY", False):
-        from src.pynector.telemetry.context import traced_gather
+    with patch("pynector.telemetry.context.HAS_OPENTELEMETRY", False):
+        from pynector.telemetry.context import traced_gather
 
         # Create test coroutines
         async def coro1():
@@ -104,15 +104,15 @@ async def test_traced_gather_no_otel():
 async def test_traced_task_group_no_otel():
     """Test traced_task_group when OpenTelemetry is not available."""
     # Mock OpenTelemetry not available and create a fresh mock each time
-    with patch("src.pynector.telemetry.context.HAS_OPENTELEMETRY", False):
-        from src.pynector.telemetry.context import traced_task_group
+    with patch("pynector.telemetry.context.HAS_OPENTELEMETRY", False):
+        from pynector.telemetry.context import traced_task_group
 
         # Create a mock task group
         mock_task_group = MagicMock()
 
         # For each test, create a new mock function that returns a fresh coroutine
         with patch(
-            "src.pynector.telemetry.context.create_task_group",
+            "pynector.telemetry.context.create_task_group",
             side_effect=lambda: asyncio.Future(),
         ):
             # Patch the create_task_group to return our mock_task_group
@@ -120,7 +120,7 @@ async def test_traced_task_group_no_otel():
                 return mock_task_group
 
             with patch(
-                "src.pynector.telemetry.context.create_task_group",
+                "pynector.telemetry.context.create_task_group",
                 return_value=mock_create_task_group(),
             ):
                 # Test with no attributes
@@ -132,8 +132,8 @@ async def test_traced_task_group_no_otel():
 async def test_traced_gather_with_exception():
     """Test traced_gather with an exception in one of the coroutines."""
     # Mock OpenTelemetry not available
-    with patch("src.pynector.telemetry.context.HAS_OPENTELEMETRY", False):
-        from src.pynector.telemetry.context import traced_gather
+    with patch("pynector.telemetry.context.HAS_OPENTELEMETRY", False):
+        from pynector.telemetry.context import traced_gather
 
         # Create test coroutines
         async def coro1():

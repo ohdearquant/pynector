@@ -17,6 +17,10 @@ from pynector.telemetry.tracing import AsyncSpanWrapper, NoOpSpan
 if HAS_OPENTELEMETRY:
     from opentelemetry import trace
     from opentelemetry.context import attach, detach, get_current
+
+# Import structlog at module level for patching in tests
+if HAS_STRUCTLOG:
+    import structlog
 else:
     # Define dummy functions for patching in tests
     def attach(context):
@@ -27,11 +31,6 @@ else:
 
     def get_current():
         return {}
-
-
-# Import structlog at module level for patching in tests
-if HAS_STRUCTLOG:
-    import structlog
 
 
 class TracingFacade:
@@ -129,37 +128,40 @@ class TracingFacade:
         Returns:
             An async context manager that will end the span when exited
         """
+        # Determine which type of span to create before the yield
+        use_opentelemetry = False
+        token = None
+        wrapper = None
+
         if HAS_OPENTELEMETRY and self.tracer:
-            # For async operations with OpenTelemetry, we need to ensure context propagation
             try:
                 # Capture current context
                 token = attach(get_current())
-                try:
-                    # Start a new span as the current span
-                    span = self.tracer.start_as_current_span(
-                        name, attributes=attributes
-                    )
-                    wrapper = AsyncSpanWrapper(span, token)
-                    try:
-                        await wrapper.__aenter__()
-                        yield wrapper
-                    finally:
-                        await wrapper.__aexit__(None, None, None)
-                except Exception:
-                    # If something goes wrong, detach the context
-                    detach(token)
-                    raise
+                # Start a new span as the current span
+                span = self.tracer.start_as_current_span(name, attributes=attributes)
+                wrapper = AsyncSpanWrapper(span, token)
+                use_opentelemetry = True
             except ImportError:
                 # Fallback if opentelemetry is not available
-                pass
+                if token is not None:
+                    detach(token)
+                    token = None
 
-        # Use NoOpSpan if OpenTelemetry is not available or there was an ImportError
-        span = NoOpSpan(name, attributes)
+        # Use the appropriate span based on what was set up above
         try:
-            await span.__aenter__()
-            yield span
+            if use_opentelemetry and wrapper is not None:
+                await wrapper.__aenter__()
+                yield wrapper
+            else:
+                # Use NoOpSpan as fallback
+                span = NoOpSpan(name, attributes)
+                await span.__aenter__()
+                yield span
         finally:
-            await span.__aexit__(None, None, None)
+            if use_opentelemetry and wrapper is not None:
+                await wrapper.__aexit__(None, None, None)
+            elif not use_opentelemetry:
+                await span.__aexit__(None, None, None)
 
 
 class LoggingFacade:

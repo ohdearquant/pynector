@@ -9,15 +9,13 @@ import pytest
 def test_tracing_facade_init(has_opentelemetry):
     """Test TracingFacade initialization."""
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry):
+    with patch("pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry):
         if has_opentelemetry:
             # Mock the trace module
             mock_tracer = MagicMock()
             mock_get_tracer = MagicMock(return_value=mock_tracer)
-            with patch(
-                "src.pynector.telemetry.facade.trace.get_tracer", mock_get_tracer
-            ):
-                from src.pynector.telemetry.facade import TracingFacade
+            with patch("pynector.telemetry.facade.trace.get_tracer", mock_get_tracer):
+                from pynector.telemetry.facade import TracingFacade
 
                 tracer = TracingFacade("test_tracer")
 
@@ -25,7 +23,7 @@ def test_tracing_facade_init(has_opentelemetry):
                 assert tracer.tracer == mock_tracer
                 mock_get_tracer.assert_called_once_with("test_tracer")
         else:
-            from src.pynector.telemetry.facade import TracingFacade
+            from pynector.telemetry.facade import TracingFacade
 
             tracer = TracingFacade("test_tracer")
 
@@ -37,17 +35,15 @@ def test_tracing_facade_init(has_opentelemetry):
 def test_tracing_facade_start_span(has_opentelemetry):
     """Test TracingFacade.start_span."""
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry):
+    with patch("pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry):
         if has_opentelemetry:
             # Mock the trace module
             mock_span = MagicMock()
             mock_tracer = MagicMock()
             mock_tracer.start_span.return_value = mock_span
             mock_get_tracer = MagicMock(return_value=mock_tracer)
-            with patch(
-                "src.pynector.telemetry.facade.trace.get_tracer", mock_get_tracer
-            ):
-                from src.pynector.telemetry.facade import TracingFacade
+            with patch("pynector.telemetry.facade.trace.get_tracer", mock_get_tracer):
+                from pynector.telemetry.facade import TracingFacade
 
                 tracer = TracingFacade("test_tracer")
 
@@ -58,8 +54,8 @@ def test_tracing_facade_start_span(has_opentelemetry):
                     "test_span", attributes={"key": "value"}
                 )
         else:
-            from src.pynector.telemetry.facade import TracingFacade
-            from src.pynector.telemetry.tracing import NoOpSpan
+            from pynector.telemetry.facade import TracingFacade
+            from pynector.telemetry.tracing import NoOpSpan
 
             tracer = TracingFacade("test_tracer")
 
@@ -74,17 +70,15 @@ def test_tracing_facade_start_span(has_opentelemetry):
 def test_tracing_facade_start_as_current_span(has_opentelemetry):
     """Test TracingFacade.start_as_current_span."""
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry):
+    with patch("pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry):
         if has_opentelemetry:
             # Mock the trace module
             mock_span = MagicMock()
             mock_tracer = MagicMock()
             mock_tracer.start_as_current_span.return_value = mock_span
             mock_get_tracer = MagicMock(return_value=mock_tracer)
-            with patch(
-                "src.pynector.telemetry.facade.trace.get_tracer", mock_get_tracer
-            ):
-                from src.pynector.telemetry.facade import TracingFacade
+            with patch("pynector.telemetry.facade.trace.get_tracer", mock_get_tracer):
+                from pynector.telemetry.facade import TracingFacade
 
                 tracer = TracingFacade("test_tracer")
 
@@ -95,8 +89,8 @@ def test_tracing_facade_start_as_current_span(has_opentelemetry):
                     "test_span", attributes={"key": "value"}
                 )
         else:
-            from src.pynector.telemetry.facade import TracingFacade
-            from src.pynector.telemetry.tracing import NoOpSpan
+            from pynector.telemetry.facade import TracingFacade
+            from pynector.telemetry.tracing import NoOpSpan
 
             tracer = TracingFacade("test_tracer")
 
@@ -112,18 +106,16 @@ def test_tracing_facade_start_as_current_span(has_opentelemetry):
 async def test_tracing_facade_start_async_span(has_opentelemetry):
     """Test TracingFacade.start_async_span."""
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry):
+    with patch("pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry):
         if has_opentelemetry:
             # Mock the trace module
             mock_span = MagicMock()
             mock_tracer = MagicMock()
             mock_tracer.start_span.return_value = mock_span
             mock_get_tracer = MagicMock(return_value=mock_tracer)
-            with patch(
-                "src.pynector.telemetry.facade.trace.get_tracer", mock_get_tracer
-            ):
-                from src.pynector.telemetry.facade import TracingFacade
-                from src.pynector.telemetry.tracing import AsyncSpanWrapper
+            with patch("pynector.telemetry.facade.trace.get_tracer", mock_get_tracer):
+                from pynector.telemetry.facade import TracingFacade
+                from pynector.telemetry.tracing import AsyncSpanWrapper
 
                 tracer = TracingFacade("test_tracer")
 
@@ -136,8 +128,8 @@ async def test_tracing_facade_start_async_span(has_opentelemetry):
                     "test_span", attributes={"key": "value"}
                 )
         else:
-            from src.pynector.telemetry.facade import TracingFacade
-            from src.pynector.telemetry.tracing import NoOpSpan
+            from pynector.telemetry.facade import TracingFacade
+            from pynector.telemetry.tracing import NoOpSpan
 
             tracer = TracingFacade("test_tracer")
 
@@ -152,7 +144,7 @@ async def test_tracing_facade_start_async_span(has_opentelemetry):
 async def test_tracing_facade_start_as_current_async_span(has_opentelemetry):
     """Test TracingFacade.start_as_current_async_span."""
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry):
+    with patch("pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry):
         if has_opentelemetry:
             # Mock the trace module and context
             mock_span = MagicMock()
@@ -166,15 +158,13 @@ async def test_tracing_facade_start_as_current_async_span(has_opentelemetry):
             mock_get_current = MagicMock(return_value=mock_context)
 
             with (
-                patch(
-                    "src.pynector.telemetry.facade.trace.get_tracer", mock_get_tracer
-                ),
-                patch("src.pynector.telemetry.facade.attach", mock_attach),
-                patch("src.pynector.telemetry.facade.detach", mock_detach),
-                patch("src.pynector.telemetry.facade.get_current", mock_get_current),
+                patch("pynector.telemetry.facade.trace.get_tracer", mock_get_tracer),
+                patch("pynector.telemetry.facade.attach", mock_attach),
+                patch("pynector.telemetry.facade.detach", mock_detach),
+                patch("pynector.telemetry.facade.get_current", mock_get_current),
             ):
-                from src.pynector.telemetry.facade import TracingFacade
-                from src.pynector.telemetry.tracing import AsyncSpanWrapper
+                from pynector.telemetry.facade import TracingFacade
+                from pynector.telemetry.tracing import AsyncSpanWrapper
 
                 tracer = TracingFacade("test_tracer")
 
@@ -190,8 +180,8 @@ async def test_tracing_facade_start_as_current_async_span(has_opentelemetry):
                     "test_span", attributes={"key": "value"}
                 )
         else:
-            from src.pynector.telemetry.facade import TracingFacade
-            from src.pynector.telemetry.tracing import NoOpSpan
+            from pynector.telemetry.facade import TracingFacade
+            from pynector.telemetry.tracing import NoOpSpan
 
             tracer = TracingFacade("test_tracer")
 
@@ -207,15 +197,15 @@ async def test_tracing_facade_start_as_current_async_span(has_opentelemetry):
 def test_logging_facade_init(has_structlog):
     """Test LoggingFacade initialization."""
     # Mock structlog availability
-    with patch("src.pynector.telemetry.facade.HAS_STRUCTLOG", has_structlog):
+    with patch("pynector.telemetry.facade.HAS_STRUCTLOG", has_structlog):
         if has_structlog:
             # Mock the structlog module
             mock_logger = MagicMock()
             mock_get_logger = MagicMock(return_value=mock_logger)
             with patch(
-                "src.pynector.telemetry.facade.structlog.get_logger", mock_get_logger
+                "pynector.telemetry.facade.structlog.get_logger", mock_get_logger
             ):
-                from src.pynector.telemetry.facade import LoggingFacade
+                from pynector.telemetry.facade import LoggingFacade
 
                 logger = LoggingFacade("test_logger")
 
@@ -223,8 +213,8 @@ def test_logging_facade_init(has_structlog):
                 assert logger.logger == mock_logger
                 mock_get_logger.assert_called_once_with("test_logger")
         else:
-            from src.pynector.telemetry.facade import LoggingFacade
-            from src.pynector.telemetry.logging import NoOpLogger
+            from pynector.telemetry.facade import LoggingFacade
+            from pynector.telemetry.logging import NoOpLogger
 
             logger = LoggingFacade("test_logger")
 
@@ -240,15 +230,15 @@ def test_logging_facade_methods(has_structlog, has_opentelemetry):
     """Test LoggingFacade methods."""
     # Mock dependencies availability
     with (
-        patch("src.pynector.telemetry.facade.HAS_STRUCTLOG", has_structlog),
-        patch("src.pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry),
+        patch("pynector.telemetry.facade.HAS_STRUCTLOG", has_structlog),
+        patch("pynector.telemetry.facade.HAS_OPENTELEMETRY", has_opentelemetry),
     ):
         if has_structlog:
             # Mock the structlog logger
             mock_logger = MagicMock()
             mock_get_logger = MagicMock(return_value=mock_logger)
             with patch(
-                "src.pynector.telemetry.facade.structlog.get_logger", mock_get_logger
+                "pynector.telemetry.facade.structlog.get_logger", mock_get_logger
             ):
                 if has_opentelemetry:
                     # Mock OpenTelemetry for trace context
@@ -261,10 +251,10 @@ def test_logging_facade_methods(has_structlog, has_opentelemetry):
                     mock_get_current_span = MagicMock(return_value=mock_span)
 
                     with patch(
-                        "src.pynector.telemetry.facade.trace.get_current_span",
+                        "pynector.telemetry.facade.trace.get_current_span",
                         mock_get_current_span,
                     ):
-                        from src.pynector.telemetry.facade import LoggingFacade
+                        from pynector.telemetry.facade import LoggingFacade
 
                         logger = LoggingFacade("test_logger")
 
@@ -318,7 +308,7 @@ def test_logging_facade_methods(has_structlog, has_opentelemetry):
                         mock_span.set_status.assert_called_once()
                 else:
                     # No OpenTelemetry
-                    from src.pynector.telemetry.facade import LoggingFacade
+                    from pynector.telemetry.facade import LoggingFacade
 
                     logger = LoggingFacade("test_logger")
 
@@ -347,7 +337,7 @@ def test_logging_facade_methods(has_structlog, has_opentelemetry):
                     )
         else:
             # No structlog, all methods should be no-ops
-            from src.pynector.telemetry.facade import LoggingFacade
+            from pynector.telemetry.facade import LoggingFacade
 
             logger = LoggingFacade("test_logger")
 

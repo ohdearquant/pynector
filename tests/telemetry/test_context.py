@@ -17,7 +17,7 @@ async def test_traced_async_operation():
 async def test_traced_gather(has_opentelemetry):
     """Test traced_gather function."""
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.context.HAS_OPENTELEMETRY", has_opentelemetry):
+    with patch("pynector.telemetry.context.HAS_OPENTELEMETRY", has_opentelemetry):
         # We only test with has_opentelemetry=False for now to avoid mocking issues
         # Create test coroutines
         async def coro1():
@@ -26,7 +26,7 @@ async def test_traced_gather(has_opentelemetry):
         async def coro2():
             return 2
 
-        from src.pynector.telemetry.context import traced_gather
+        from pynector.telemetry.context import traced_gather
 
         # Test traced_gather without OpenTelemetry
         results = await traced_gather(MagicMock(), [coro1(), coro2()], "test_gather")
@@ -40,7 +40,7 @@ async def test_traced_task_group(has_opentelemetry):
     """Test traced_task_group function."""
     # We only test with has_opentelemetry=False for now to avoid mocking issues
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.context.HAS_OPENTELEMETRY", has_opentelemetry):
+    with patch("pynector.telemetry.context.HAS_OPENTELEMETRY", has_opentelemetry):
         # Mock anyio task group
         mock_task_group = MagicMock()
 
@@ -51,9 +51,9 @@ async def test_traced_task_group(has_opentelemetry):
         mock_create_task_group = MagicMock(return_value=async_return_task_group())
 
         with patch(
-            "src.pynector.telemetry.context.create_task_group", mock_create_task_group
+            "pynector.telemetry.context.create_task_group", mock_create_task_group
         ):
-            from src.pynector.telemetry.context import traced_task_group
+            from pynector.telemetry.context import traced_task_group
 
             # Test traced_task_group without OpenTelemetry
             task_group = await traced_task_group(
@@ -76,7 +76,7 @@ async def test_traced_task_group(has_opentelemetry):
             )
 
             with patch(
-                "src.pynector.telemetry.context.create_task_group",
+                "pynector.telemetry.context.create_task_group",
                 mock_create_task_group,
             ):
                 task_group = await traced_task_group(MagicMock(), "test_task_group")
@@ -87,10 +87,10 @@ async def test_traced_task_group(has_opentelemetry):
 
 def test_dummy_functions():
     """Test the dummy functions defined in the module."""
-    from src.pynector.telemetry.context import HAS_OPENTELEMETRY
+    from pynector.telemetry.context import HAS_OPENTELEMETRY
 
     if not HAS_OPENTELEMETRY:
-        from src.pynector.telemetry.context import attach, detach, get_current
+        from pynector.telemetry.context import attach, detach, get_current
 
         # Test attach
         token = attach({"key": "value"})
@@ -109,10 +109,10 @@ def test_create_task_group_import_error():
     """Test create_task_group with ImportError."""
     # We need to patch the import to simulate the ImportError
     with patch(
-        "src.pynector.telemetry.context.create_task_group",
+        "pynector.telemetry.context.create_task_group",
         side_effect=ImportError("anyio is required for traced_task_group"),
     ):
-        from src.pynector.telemetry.context import create_task_group
+        from pynector.telemetry.context import create_task_group
 
         # Test with ImportError
         with pytest.raises(ImportError):
@@ -124,8 +124,8 @@ def test_create_task_group_import_error():
 async def test_traced_async_operation_simple():
     """Test traced_async_operation with a simple case."""
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.context.HAS_OPENTELEMETRY", False):
-        from src.pynector.telemetry.context import traced_async_operation
+    with patch("pynector.telemetry.context.HAS_OPENTELEMETRY", False):
+        from pynector.telemetry.context import traced_async_operation
 
         # Create a mock tracer
         mock_tracer = MagicMock()
@@ -144,13 +144,13 @@ async def test_traced_task_group_import_error():
     """Test traced_task_group with ImportError."""
     # Mock OpenTelemetry availability
     with (
-        patch("src.pynector.telemetry.context.HAS_OPENTELEMETRY", False),
+        patch("pynector.telemetry.context.HAS_OPENTELEMETRY", False),
         patch(
-            "src.pynector.telemetry.context.create_task_group",
+            "pynector.telemetry.context.create_task_group",
             side_effect=ImportError("anyio is required for traced_task_group"),
         ),
     ):
-        from src.pynector.telemetry.context import traced_task_group
+        from pynector.telemetry.context import traced_task_group
 
         # Test with ImportError
         with pytest.raises(ImportError):
@@ -161,8 +161,8 @@ async def test_traced_task_group_import_error():
 async def test_traced_gather_exception():
     """Test traced_gather with an exception."""
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.context.HAS_OPENTELEMETRY", False):
-        from src.pynector.telemetry.context import traced_gather
+    with patch("pynector.telemetry.context.HAS_OPENTELEMETRY", False):
+        from pynector.telemetry.context import traced_gather
 
         # Create test coroutines
         async def coro1():

@@ -13,7 +13,7 @@ from pynector.telemetry import HAS_OPENTELEMETRY, HAS_STRUCTLOG
 
 # Import these at module level for patching in tests
 if HAS_OPENTELEMETRY:
-    from opentelemetry import trace
+    from opentelemetry import trace  # noqa: F401
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -226,7 +226,10 @@ def configure_telemetry(
 
                 # Create and set tracer provider
                 tracer_provider = TracerProvider(resource=resource)
-                trace.set_tracer_provider(tracer_provider)
+                # Use imported trace from the conditional import at the top
+                from opentelemetry import trace as otel_trace
+
+                otel_trace.set_tracer_provider(tracer_provider)
 
                 # Configure exporters
                 _configure_exporters(tracer_provider, trace_exporters)

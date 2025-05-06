@@ -9,7 +9,7 @@ import pytest
 async def test_tracing_facade_start_as_current_async_span_exception():
     """Test TracingFacade.start_as_current_async_span exception handling."""
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.facade.HAS_OPENTELEMETRY", True):
+    with patch("pynector.telemetry.facade.HAS_OPENTELEMETRY", True):
         # Mock the trace module and context with attach raising an exception
         mock_span = MagicMock()
         mock_tracer = MagicMock()
@@ -21,12 +21,12 @@ async def test_tracing_facade_start_as_current_async_span_exception():
         mock_get_current = MagicMock(return_value=mock_context)
 
         with (
-            patch("src.pynector.telemetry.facade.trace.get_tracer", mock_get_tracer),
-            patch("src.pynector.telemetry.facade.attach", mock_attach),
-            patch("src.pynector.telemetry.facade.detach", mock_detach),
-            patch("src.pynector.telemetry.facade.get_current", mock_get_current),
+            patch("pynector.telemetry.facade.trace.get_tracer", mock_get_tracer),
+            patch("pynector.telemetry.facade.attach", mock_attach),
+            patch("pynector.telemetry.facade.detach", mock_detach),
+            patch("pynector.telemetry.facade.get_current", mock_get_current),
         ):
-            from src.pynector.telemetry.facade import TracingFacade
+            from pynector.telemetry.facade import TracingFacade
 
             tracer = TracingFacade("test_tracer")
 
@@ -46,7 +46,7 @@ async def test_tracing_facade_start_as_current_async_span_exception():
 async def test_tracing_facade_start_as_current_async_span_import_error():
     """Test TracingFacade.start_as_current_async_span with import error."""
     # Mock OpenTelemetry availability but get_current raises ImportError
-    with patch("src.pynector.telemetry.facade.HAS_OPENTELEMETRY", True):
+    with patch("pynector.telemetry.facade.HAS_OPENTELEMETRY", True):
         # Mock the trace module and context with get_current raising ImportError
         mock_span = MagicMock()
         mock_tracer = MagicMock()
@@ -57,13 +57,13 @@ async def test_tracing_facade_start_as_current_async_span_import_error():
         mock_get_current = MagicMock(side_effect=ImportError("Test import error"))
 
         with (
-            patch("src.pynector.telemetry.facade.trace.get_tracer", mock_get_tracer),
-            patch("src.pynector.telemetry.facade.attach", mock_attach),
-            patch("src.pynector.telemetry.facade.detach", mock_detach),
-            patch("src.pynector.telemetry.facade.get_current", mock_get_current),
+            patch("pynector.telemetry.facade.trace.get_tracer", mock_get_tracer),
+            patch("pynector.telemetry.facade.attach", mock_attach),
+            patch("pynector.telemetry.facade.detach", mock_detach),
+            patch("pynector.telemetry.facade.get_current", mock_get_current),
         ):
-            from src.pynector.telemetry.facade import TracingFacade
-            from src.pynector.telemetry.tracing import NoOpSpan
+            from pynector.telemetry.facade import TracingFacade
+            from pynector.telemetry.tracing import NoOpSpan
 
             tracer = TracingFacade("test_tracer")
 
@@ -85,8 +85,8 @@ def test_logging_facade_methods_with_import_error():
     """Test LoggingFacade methods with ImportError when getting trace context."""
     # Mock dependencies availability
     with (
-        patch("src.pynector.telemetry.facade.HAS_STRUCTLOG", True),
-        patch("src.pynector.telemetry.facade.HAS_OPENTELEMETRY", True),
+        patch("pynector.telemetry.facade.HAS_STRUCTLOG", True),
+        patch("pynector.telemetry.facade.HAS_OPENTELEMETRY", True),
     ):
         # Mock the structlog logger
         mock_logger = MagicMock()
@@ -96,15 +96,13 @@ def test_logging_facade_methods_with_import_error():
         mock_get_current_span = MagicMock(side_effect=ImportError("Test import error"))
 
         with (
+            patch("pynector.telemetry.facade.structlog.get_logger", mock_get_logger),
             patch(
-                "src.pynector.telemetry.facade.structlog.get_logger", mock_get_logger
-            ),
-            patch(
-                "src.pynector.telemetry.facade.trace.get_current_span",
+                "pynector.telemetry.facade.trace.get_current_span",
                 mock_get_current_span,
             ),
         ):
-            from src.pynector.telemetry.facade import LoggingFacade
+            from pynector.telemetry.facade import LoggingFacade
 
             logger = LoggingFacade("test_logger")
 
@@ -154,8 +152,8 @@ def test_logging_facade_error_methods_with_import_error():
     """Test LoggingFacade error and critical methods with ImportError when setting status."""
     # Mock dependencies availability
     with (
-        patch("src.pynector.telemetry.facade.HAS_STRUCTLOG", True),
-        patch("src.pynector.telemetry.facade.HAS_OPENTELEMETRY", True),
+        patch("pynector.telemetry.facade.HAS_STRUCTLOG", True),
+        patch("pynector.telemetry.facade.HAS_OPENTELEMETRY", True),
     ):
         # Mock the structlog logger
         mock_logger = MagicMock()
@@ -172,19 +170,17 @@ def test_logging_facade_error_methods_with_import_error():
         mock_get_current_span = MagicMock(return_value=mock_span)
 
         with (
+            patch("pynector.telemetry.facade.structlog.get_logger", mock_get_logger),
             patch(
-                "src.pynector.telemetry.facade.structlog.get_logger", mock_get_logger
-            ),
-            patch(
-                "src.pynector.telemetry.facade.trace.get_current_span",
+                "pynector.telemetry.facade.trace.get_current_span",
                 mock_get_current_span,
             ),
             patch(
-                "src.pynector.telemetry.facade.trace.Status",
+                "pynector.telemetry.facade.trace.Status",
                 MagicMock(side_effect=ImportError("Test import error")),
             ),
         ):
-            from src.pynector.telemetry.facade import LoggingFacade
+            from pynector.telemetry.facade import LoggingFacade
 
             logger = LoggingFacade("test_logger")
 

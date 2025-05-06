@@ -694,7 +694,7 @@ async def exception_group_example():
         async with create_task_group() as tg:
             await tg.start_soon(task_that_might_fail)
             await tg.start_soon(another_task_that_might_fail)
-    except* Exception as eg:
+    except Exception as eg:
         # Handle the exception group
         for exc in eg.exceptions:
             print(f"Task failed: {exc}")

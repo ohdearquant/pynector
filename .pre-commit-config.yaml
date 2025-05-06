@@ -26,6 +26,12 @@ repos:
         # Limit this hook to only Markdown files to avoid conflict with other formatters.
         files: \.(md|markdown)$
 
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
   # Ruff for Python linting and formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Use a recent version; v0.5.1+ automatically detects pyproject.toml [2]
@@ -39,18 +45,6 @@ repos:
           --exit-non-zero-on-fix,
         ] # Apply fixes and report if changes were made
       - id: ruff-format
-
-  - repo: https://github.com/psf/black
-    rev: 24.3.0
-    hooks:
-      - id: black
-        language_version: python3
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        args: ["--profile", "black"]
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.15.2

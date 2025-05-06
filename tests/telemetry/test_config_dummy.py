@@ -7,10 +7,10 @@ from unittest.mock import MagicMock, patch
 def test_configure_exporters_with_zipkin():
     """Test _configure_exporters function with zipkin exporter."""
     # Import the function directly
-    from src.pynector.telemetry.config import _configure_exporters
+    from pynector.telemetry.config import _configure_exporters
 
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.config.HAS_OPENTELEMETRY", True):
+    with patch("pynector.telemetry.config.HAS_OPENTELEMETRY", True):
         # Create mocks for all required components
         mock_tracer_provider = MagicMock()
         mock_batch_processor = MagicMock()
@@ -19,11 +19,11 @@ def test_configure_exporters_with_zipkin():
         # Create the necessary imports and patch the actual implementation
         with (
             patch(
-                "src.pynector.telemetry.config.BatchSpanProcessor",
+                "pynector.telemetry.config.BatchSpanProcessor",
                 return_value=mock_batch_processor,
             ),
             patch(
-                "src.pynector.telemetry.config.ZipkinExporter",
+                "pynector.telemetry.config.ZipkinExporter",
                 return_value=mock_zipkin_exporter,
             ),
             patch.dict(os.environ, {"OTEL_TRACES_EXPORTER": "zipkin"}, clear=True),
@@ -39,10 +39,10 @@ def test_configure_exporters_with_zipkin():
 def test_configure_exporters_with_multiple_exporters():
     """Test _configure_exporters function with multiple exporters."""
     # Import the function directly
-    from src.pynector.telemetry.config import _configure_exporters
+    from pynector.telemetry.config import _configure_exporters
 
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.config.HAS_OPENTELEMETRY", True):
+    with patch("pynector.telemetry.config.HAS_OPENTELEMETRY", True):
         # Create mocks for all required components
         mock_tracer_provider = MagicMock()
         mock_batch_processor = MagicMock()
@@ -52,15 +52,15 @@ def test_configure_exporters_with_multiple_exporters():
         # Create the necessary imports and patch the actual implementation
         with (
             patch(
-                "src.pynector.telemetry.config.BatchSpanProcessor",
+                "pynector.telemetry.config.BatchSpanProcessor",
                 return_value=mock_batch_processor,
             ),
             patch(
-                "src.pynector.telemetry.config.OTLPSpanExporter",
+                "pynector.telemetry.config.OTLPSpanExporter",
                 return_value=mock_otlp_exporter,
             ),
             patch(
-                "src.pynector.telemetry.config.ConsoleSpanExporter",
+                "pynector.telemetry.config.ConsoleSpanExporter",
                 return_value=mock_console_exporter,
             ),
             patch.dict(
@@ -77,10 +77,10 @@ def test_configure_exporters_with_multiple_exporters():
 def test_configure_exporters_with_endpoint():
     """Test _configure_exporters function with endpoint configuration."""
     # Import the function directly
-    from src.pynector.telemetry.config import _configure_exporters
+    from pynector.telemetry.config import _configure_exporters
 
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.config.HAS_OPENTELEMETRY", True):
+    with patch("pynector.telemetry.config.HAS_OPENTELEMETRY", True):
         # Create mocks for all required components
         mock_tracer_provider = MagicMock()
         mock_batch_processor = MagicMock()
@@ -89,11 +89,11 @@ def test_configure_exporters_with_endpoint():
         # Create the necessary imports and patch the actual implementation
         with (
             patch(
-                "src.pynector.telemetry.config.BatchSpanProcessor",
+                "pynector.telemetry.config.BatchSpanProcessor",
                 return_value=mock_batch_processor,
             ),
             patch(
-                "src.pynector.telemetry.config.OTLPSpanExporter",
+                "pynector.telemetry.config.OTLPSpanExporter",
                 return_value=mock_otlp_exporter,
             ),
             patch.dict(
@@ -115,10 +115,10 @@ def test_configure_exporters_with_endpoint():
 def test_configure_exporters_with_zipkin_endpoint():
     """Test _configure_exporters function with zipkin endpoint configuration."""
     # Import the function directly
-    from src.pynector.telemetry.config import _configure_exporters
+    from pynector.telemetry.config import _configure_exporters
 
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.config.HAS_OPENTELEMETRY", True):
+    with patch("pynector.telemetry.config.HAS_OPENTELEMETRY", True):
         # Create mocks for all required components
         mock_tracer_provider = MagicMock()
         mock_batch_processor = MagicMock()
@@ -127,11 +127,11 @@ def test_configure_exporters_with_zipkin_endpoint():
         # Create the necessary imports and patch the actual implementation
         with (
             patch(
-                "src.pynector.telemetry.config.BatchSpanProcessor",
+                "pynector.telemetry.config.BatchSpanProcessor",
                 return_value=mock_batch_processor,
             ),
             patch(
-                "src.pynector.telemetry.config.ZipkinExporter",
+                "pynector.telemetry.config.ZipkinExporter",
                 return_value=mock_zipkin_exporter,
             ),
             patch.dict(

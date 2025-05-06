@@ -7,10 +7,10 @@ from unittest.mock import MagicMock, patch
 def test_configure_exporters_with_otel():
     """Test _configure_exporters function with OTLP exporter."""
     # Import the function directly
-    from src.pynector.telemetry.config import _configure_exporters
+    from pynector.telemetry.config import _configure_exporters
 
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.config.HAS_OPENTELEMETRY", True):
+    with patch("pynector.telemetry.config.HAS_OPENTELEMETRY", True):
         # Create mocks for all required components
         mock_tracer_provider = MagicMock()
         mock_batch_processor = MagicMock()
@@ -19,11 +19,11 @@ def test_configure_exporters_with_otel():
         # Create the necessary imports and patch the actual implementation
         with (
             patch(
-                "src.pynector.telemetry.config.BatchSpanProcessor",
+                "pynector.telemetry.config.BatchSpanProcessor",
                 return_value=mock_batch_processor,
             ),
             patch(
-                "src.pynector.telemetry.config.OTLPSpanExporter",
+                "pynector.telemetry.config.OTLPSpanExporter",
                 return_value=mock_otlp_exporter,
             ),
             patch.dict(os.environ, {"OTEL_TRACES_EXPORTER": "otlp"}, clear=True),
@@ -39,10 +39,10 @@ def test_configure_exporters_with_otel():
 def test_configure_exporters_with_console():
     """Test _configure_exporters function with console exporter."""
     # Import the function directly
-    from src.pynector.telemetry.config import _configure_exporters
+    from pynector.telemetry.config import _configure_exporters
 
     # Mock OpenTelemetry availability
-    with patch("src.pynector.telemetry.config.HAS_OPENTELEMETRY", True):
+    with patch("pynector.telemetry.config.HAS_OPENTELEMETRY", True):
         # Create mocks for all required components
         mock_tracer_provider = MagicMock()
         mock_batch_processor = MagicMock()
@@ -51,11 +51,11 @@ def test_configure_exporters_with_console():
         # Create the necessary imports and patch the actual implementation
         with (
             patch(
-                "src.pynector.telemetry.config.BatchSpanProcessor",
+                "pynector.telemetry.config.BatchSpanProcessor",
                 return_value=mock_batch_processor,
             ),
             patch(
-                "src.pynector.telemetry.config.ConsoleSpanExporter",
+                "pynector.telemetry.config.ConsoleSpanExporter",
                 return_value=mock_console_exporter,
             ),
             patch.dict(os.environ, {"OTEL_TRACES_EXPORTER": "console"}, clear=True),
@@ -70,10 +70,10 @@ def test_configure_exporters_with_console():
 
 def test_configure_structlog_detailed():
     """Test _configure_structlog function in detail."""
-    from src.pynector.telemetry.config import _configure_structlog
+    from pynector.telemetry.config import _configure_structlog
 
     # Mock structlog availability
-    with patch("src.pynector.telemetry.config.HAS_STRUCTLOG", True):
+    with patch("pynector.telemetry.config.HAS_STRUCTLOG", True):
         # Mock the required modules
         mock_structlog = MagicMock()
         mock_logging = MagicMock()
@@ -108,8 +108,8 @@ def test_configure_structlog_detailed():
         ):
             # Patch the modules directly
             with (
-                patch("src.pynector.telemetry.config.structlog", mock_structlog),
-                patch("src.pynector.telemetry.config.logging", mock_logging),
+                patch("pynector.telemetry.config.structlog", mock_structlog),
+                patch("pynector.telemetry.config.logging", mock_logging),
             ):
                 # Test with default values
                 _configure_structlog("INFO")
@@ -149,10 +149,10 @@ def test_configure_structlog_detailed():
 
 def test_dummy_classes_more_coverage():
     """Test more dummy classes to increase coverage."""
-    from src.pynector.telemetry.config import HAS_OPENTELEMETRY, HAS_STRUCTLOG
+    from pynector.telemetry.config import HAS_OPENTELEMETRY, HAS_STRUCTLOG
 
     if not HAS_OPENTELEMETRY:
-        from src.pynector.telemetry.config import (
+        from pynector.telemetry.config import (
             BatchSpanProcessor,
             ConsoleSpanExporter,
             OTLPSpanExporter,
@@ -179,7 +179,7 @@ def test_dummy_classes_more_coverage():
         assert console_exporter.service_name == "test-service"
 
     if not HAS_STRUCTLOG:
-        from src.pynector.telemetry.config import structlog
+        from pynector.telemetry.config import structlog
 
         # Test bound logger methods
         logger = structlog.get_logger("test_logger")
@@ -192,7 +192,7 @@ def test_dummy_classes_more_coverage():
 
 def test_get_env_bool_edge_cases():
     """Test get_env_bool with more edge cases."""
-    from src.pynector.telemetry.config import get_env_bool
+    from pynector.telemetry.config import get_env_bool
 
     # Test with various truthy values
     with patch.dict(os.environ, {"TEST_BOOL": "TRUE"}):  # uppercase
