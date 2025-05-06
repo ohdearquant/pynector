@@ -80,7 +80,7 @@ class Fallback:
             return Fallback(obj=getattr(self._obj, item), fallback=self._fallback)
         except (KeyError, AttributeError):
             return Fallback(fallback=self._fallback)
-            
+
     def __call__(self, *args, **kwargs) -> Fallback:
         try:
             return Fallback(obj=self._obj(*args, **kwargs), fallback=self._fallback)
@@ -126,7 +126,7 @@ def _optional_import(
         else:
             msg = f"Install the `{_module}` package to make use of this feature."
         import_error = e
-        
+
     # failed import class closure
     class _failed_import:
         def __init__(self, *args, **kwargs):
@@ -162,7 +162,7 @@ try:
     HAS_OPENTELEMETRY = True
 except ImportError:
     HAS_OPENTELEMETRY = False
-    
+
     # Create no-op implementations
     class NoOpSpan:
         def __enter__(self): return self
@@ -170,24 +170,24 @@ except ImportError:
         def set_attribute(self, key, value): pass
         def add_event(self, name, attributes=None): pass
         def record_exception(self, exception): pass
-        
+
     class NoOpTracer:
         def start_span(self, name, context=None, kind=None, attributes=None):
             return NoOpSpan()
         def start_as_current_span(self, name, context=None, kind=None, attributes=None):
             return NoOpSpan()
-            
+
     class NoOpTracerProvider:
         def get_tracer(self, name, version=None):
             return NoOpTracer()
-            
+
     # Create module-level functions and objects
     def get_tracer(name, version=None):
         return NoOpTracer()
-        
+
     def get_current_span():
         return NoOpSpan()
-        
+
     trace = type('trace', (), {
         'get_tracer': get_tracer,
         'get_current_span': get_current_span,
@@ -271,7 +271,7 @@ async def worker(context, question):
 async def process_questions(questions):
     # Capture the current context (including any active spans)
     context = get_current()
-    
+
     # Create tasks with the captured context
     tasks = [asyncio.create_task(worker(context, q)) for q in questions]
     return await asyncio.gather(*tasks)
@@ -314,7 +314,7 @@ async def traced_gather(coroutines, name="parallel_operations"):
     with tracer.start_as_current_span(name) as span:
         # Capture current context with the active span
         context = get_current()
-        
+
         # Wrap each coroutine to propagate context
         async def with_context(coro):
             token = attach(context)
@@ -322,7 +322,7 @@ async def traced_gather(coroutines, name="parallel_operations"):
                 return await coro
             finally:
                 detach(token)
-                
+
         # Run all coroutines with the same context
         wrapped = [with_context(coro) for coro in coroutines]
         return await asyncio.gather(*wrapped)
@@ -458,11 +458,11 @@ def configure_telemetry(
     # Determine if tracing is enabled
     if trace_enabled is None:
         trace_enabled = os.environ.get("OTEL_SDK_DISABLED", "false").lower() != "true"
-        
+
     # Get service name
     if service_name is None:
         service_name = os.environ.get("OTEL_SERVICE_NAME", "unknown_service")
-        
+
     # Get resource attributes
     if resource_attributes is None:
         resource_attributes = {}
@@ -472,22 +472,22 @@ def configure_telemetry(
                 if "=" in pair:
                     key, value = pair.split("=", 1)
                     resource_attributes[key.strip()] = value.strip()
-                    
+
     # Ensure service name is in resource attributes
     resource_attributes["service.name"] = service_name
-    
+
     # Configure OpenTelemetry if enabled
     if trace_enabled:
         resource = Resource.create(resource_attributes)
         tracer_provider = TracerProvider(resource=resource)
         trace.set_tracer_provider(tracer_provider)
-        
+
         # Configure exporters based on environment variables
         configure_exporters(tracer_provider)
-    
+
     # Configure structlog
     configure_structlog(log_level, trace_enabled)
-    
+
     return trace_enabled
 ```
 
@@ -557,7 +557,7 @@ try:
     HAS_STRUCTLOG = True
 except ImportError:
     HAS_STRUCTLOG = False
-    
+
 try:
     from opentelemetry import trace
     from opentelemetry.trace.status import Status, StatusCode
@@ -568,7 +568,7 @@ except ImportError:
     class StatusCode:
         ERROR = 1
         OK = 0
-    
+
     class Status:
         def __init__(self, status_code):
             self.status_code = status_code
@@ -581,12 +581,12 @@ class TracingFacade:
             self.tracer = trace.get_tracer(name)
         else:
             self.tracer = None
-            
+
     def start_span(self, name, attributes=None):
         if self.tracer:
             return self.tracer.start_span(name, attributes=attributes)
         return NoOpSpan()
-        
+
     def start_as_current_span(self, name, attributes=None):
         if self.tracer:
             return self.tracer.start_as_current_span(name, attributes=attributes)
@@ -600,7 +600,7 @@ class LoggingFacade:
             self.logger = structlog.get_logger(name)
         else:
             self.logger = NoOpLogger()
-            
+
     def info(self, event, **kwargs):
         if HAS_OPENTELEMETRY:
             # Add trace context to logs
@@ -611,7 +611,7 @@ class LoggingFacade:
                     kwargs["trace_id"] = format(context.trace_id, "032x")
                     kwargs["span_id"] = format(context.span_id, "016x")
         return self.logger.info(event, **kwargs)
-        
+
     def error(self, event, **kwargs):
         if HAS_OPENTELEMETRY:
             # Add trace context to logs
@@ -633,7 +633,7 @@ class NoOpSpan:
     def add_event(self, name, attributes=None): pass
     def record_exception(self, exception): pass
     def set_status(self, status): pass
-    
+
 class NoOpLogger:
     def info(self, event, **kwargs): pass
     def error(self, event, **kwargs): pass
@@ -713,7 +713,7 @@ tracer, logger = get_telemetry("pynector.module")
 async def process_data(data):
     # Log with structured data
     logger.info("processing_data", data_size=len(data))
-    
+
     # Create a span for the operation
     with tracer.start_as_current_span("process_data", attributes={"data_size": len(data)}) as span:
         try:

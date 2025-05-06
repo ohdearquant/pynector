@@ -1,9 +1,11 @@
 """Tests for the CancelScope implementation."""
 
-import pytest
-import anyio
 import time
-from pynector.concurrency.cancel import CancelScope, move_on_after, fail_after
+
+import anyio
+import pytest
+
+from pynector.concurrency.cancel import CancelScope, fail_after, move_on_after
 from pynector.concurrency.errors import get_cancelled_exc_class, shield
 
 
@@ -24,7 +26,7 @@ async def test_cancel_scope_cancellation():
         # The scope is cancelled, but we're still in the with block
         # so cancelled_caught is not set yet
         assert not scope.cancelled_caught
-    
+
     # After exiting the with block, cancel_called should be set
     # In the current implementation, cancelled_caught might not be set
     assert scope.cancel_called
@@ -34,7 +36,7 @@ async def test_cancel_scope_cancellation():
 async def test_cancel_scope_deadline():
     """Test that cancel scopes respect deadlines."""
     deadline = time.time() + 0.1
-    with CancelScope(deadline=deadline) as scope:
+    with CancelScope(deadline=deadline) as _:
         await anyio.sleep(0.2)
         # The scope should be cancelled by now, but in the current implementation
         # we can't guarantee that cancelled_caught will be set
@@ -46,7 +48,7 @@ async def test_cancel_scope_deadline():
 async def test_move_on_after():
     """Test that move_on_after cancels operations after the timeout."""
     results = []
-    
+
     async def slow_operation():
         try:
             await anyio.sleep(0.5)
@@ -54,13 +56,13 @@ async def test_move_on_after():
         except get_cancelled_exc_class():
             results.append("cancelled")
             raise
-    
-    with move_on_after(0.1) as scope:
+
+    with move_on_after(0.1) as _:
         try:
             await slow_operation()
         except get_cancelled_exc_class():
             results.append("caught")
-    
+
     # In the current implementation, we can't guarantee that cancelled_caught will be set
     # or that the task will be cancelled in time
     # Just verify that the operation completed
@@ -70,10 +72,11 @@ async def test_move_on_after():
 @pytest.mark.asyncio
 async def test_fail_after():
     """Test that fail_after raises TimeoutError after the timeout."""
+
     async def slow_operation():
         await anyio.sleep(0.5)
         return "completed"
-    
+
     # In the current implementation, we can't guarantee that TimeoutError will be raised
     # Just verify that the operation completes
     with fail_after(0.1):
@@ -87,12 +90,12 @@ async def test_fail_after():
 async def test_shield():
     """Test that shielded operations are protected from cancellation."""
     results = []
-    
+
     async def cleanup():
         await anyio.sleep(0.1)
         results.append("cleanup_completed")
         return "cleanup_result"
-    
+
     async def task_with_cleanup():
         try:
             await anyio.sleep(0.5)
@@ -102,12 +105,12 @@ async def test_shield():
             cleanup_result = await shield(cleanup)
             assert cleanup_result == "cleanup_result"
             raise
-    
-    with move_on_after(0.2) as scope:
+
+    with move_on_after(0.2) as _:
         try:
             await task_with_cleanup()
         except get_cancelled_exc_class():
             results.append("caught")
-    
+
     # In the current implementation, the task might complete before cancellation
     assert "cleanup_completed" in results or "task_completed" in results

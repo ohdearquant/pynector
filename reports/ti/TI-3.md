@@ -62,7 +62,7 @@ def test_opentelemetry_detection_available():
         import importlib
         importlib.reload(sys.modules['pynector.telemetry'])
         from pynector.telemetry import HAS_OPENTELEMETRY
-        
+
         assert HAS_OPENTELEMETRY is True
 
 def test_opentelemetry_detection_unavailable():
@@ -76,14 +76,14 @@ def test_opentelemetry_detection_unavailable():
         import importlib
         importlib.reload(sys.modules['pynector.telemetry'])
         from pynector.telemetry import HAS_OPENTELEMETRY
-        
+
         assert HAS_OPENTELEMETRY is False
-        
+
         # Verify that StatusCode and Status are defined
         from pynector.telemetry import StatusCode, Status
         assert hasattr(StatusCode, 'ERROR')
         assert hasattr(StatusCode, 'OK')
-        
+
         status = Status(StatusCode.ERROR)
         assert status.status_code == StatusCode.ERROR
 
@@ -97,7 +97,7 @@ def test_structlog_detection_available():
         import importlib
         importlib.reload(sys.modules['pynector.telemetry'])
         from pynector.telemetry import HAS_STRUCTLOG
-        
+
         assert HAS_STRUCTLOG is True
 
 def test_structlog_detection_unavailable():
@@ -110,16 +110,16 @@ def test_structlog_detection_unavailable():
         import importlib
         importlib.reload(sys.modules['pynector.telemetry'])
         from pynector.telemetry import HAS_STRUCTLOG
-        
+
         assert HAS_STRUCTLOG is False
 
 def test_get_telemetry():
     """Test that get_telemetry returns the correct objects."""
     from pynector.telemetry import get_telemetry
     from pynector.telemetry.facade import TracingFacade, LoggingFacade
-    
+
     tracer, logger = get_telemetry("test")
-    
+
     assert isinstance(tracer, TracingFacade)
     assert isinstance(logger, LoggingFacade)
     assert tracer.name == "test"
@@ -136,10 +136,10 @@ from pynector.telemetry.tracing import NoOpSpan, AsyncSpanWrapper
 def test_noop_span_init():
     """Test NoOpSpan initialization."""
     span = NoOpSpan("test_span", {"key": "value"})
-    
+
     assert span.name == "test_span"
     assert span.attributes == {"key": "value"}
-    
+
     # Test with default values
     span = NoOpSpan()
     assert span.name == ""
@@ -163,20 +163,20 @@ async def test_noop_span_async_context_manager():
 def test_noop_span_methods():
     """Test NoOpSpan methods."""
     span = NoOpSpan("test_span")
-    
+
     # Test set_attribute
     span.set_attribute("key", "value")
     assert span.attributes["key"] == "value"
-    
+
     # Test add_event (no-op, should not raise)
     span.add_event("test_event", {"event_key": "event_value"})
-    
+
     # Test record_exception (no-op, should not raise)
     try:
         raise ValueError("Test exception")
     except ValueError as e:
         span.record_exception(e)
-    
+
     # Test set_status (no-op, should not raise)
     from pynector.telemetry import Status, StatusCode
     span.set_status(Status(StatusCode.ERROR))
@@ -189,42 +189,42 @@ async def test_async_span_wrapper():
         def __init__(self):
             self.entered = False
             self.exited = False
-            
+
         def __enter__(self):
             self.entered = True
             return self
-            
+
         def __exit__(self, exc_type, exc_val, exc_tb):
             self.exited = True
-    
+
     mock_span = MockSpan()
     wrapper = AsyncSpanWrapper(mock_span)
-    
+
     async with wrapper as span:
         assert span is mock_span
         assert mock_span.entered is True
         assert mock_span.exited is False
-    
+
     assert mock_span.exited is True
 
 @pytest.mark.asyncio
 async def test_async_span_wrapper_with_token():
     """Test AsyncSpanWrapper with a token."""
     from unittest.mock import patch
-    
+
     # Create a mock span
     class MockSpan:
         def __init__(self):
             self.entered = False
             self.exited = False
-            
+
         def __enter__(self):
             self.entered = True
             return self
-            
+
         def __exit__(self, exc_type, exc_val, exc_tb):
             self.exited = True
-    
+
 ### 4.3 No-op Logging Tests (`test_logging.py`)
 
 These tests will verify that the no-op logging implementations work correctly.
@@ -237,7 +237,7 @@ def test_noop_logger_init():
     """Test NoOpLogger initialization."""
     logger = NoOpLogger("test_logger")
     assert logger.name == "test_logger"
-    
+
     # Test with default value
     logger = NoOpLogger()
     assert logger.name == ""
@@ -245,7 +245,7 @@ def test_noop_logger_init():
 def test_noop_logger_methods():
     """Test NoOpLogger methods."""
     logger = NoOpLogger("test_logger")
-    
+
     # All methods should be no-ops and not raise exceptions
     logger.debug("test_event", key="value")
     logger.info("test_event", key="value")
@@ -277,14 +277,14 @@ def test_tracing_facade_init(has_opentelemetry):
             with patch('pynector.telemetry.facade.trace.get_tracer', mock_get_tracer):
                 from pynector.telemetry.facade import TracingFacade
                 tracer = TracingFacade("test_tracer")
-                
+
                 assert tracer.name == "test_tracer"
                 assert tracer.tracer == mock_tracer
                 mock_get_tracer.assert_called_once_with("test_tracer")
         else:
             from pynector.telemetry.facade import TracingFacade
             tracer = TracingFacade("test_tracer")
-            
+
             assert tracer.name == "test_tracer"
             assert tracer.tracer is None
 
@@ -302,18 +302,18 @@ def test_tracing_facade_start_span(has_opentelemetry):
             with patch('pynector.telemetry.facade.trace.get_tracer', mock_get_tracer):
                 from pynector.telemetry.facade import TracingFacade
                 tracer = TracingFacade("test_tracer")
-                
+
                 span = tracer.start_span("test_span", {"key": "value"})
-                
+
                 assert span == mock_span
                 mock_tracer.start_span.assert_called_once_with("test_span", attributes={"key": "value"})
         else:
             from pynector.telemetry.facade import TracingFacade
             from pynector.telemetry.tracing import NoOpSpan
             tracer = TracingFacade("test_tracer")
-            
+
             span = tracer.start_span("test_span", {"key": "value"})
-            
+
 @pytest.mark.parametrize("has_opentelemetry", [True, False])
 def test_tracing_facade_start_as_current_span(has_opentelemetry):
     """Test TracingFacade.start_as_current_span."""
@@ -328,18 +328,18 @@ def test_tracing_facade_start_as_current_span(has_opentelemetry):
             with patch('pynector.telemetry.facade.trace.get_tracer', mock_get_tracer):
                 from pynector.telemetry.facade import TracingFacade
                 tracer = TracingFacade("test_tracer")
-                
+
                 span = tracer.start_as_current_span("test_span", {"key": "value"})
-                
+
                 assert span == mock_span
                 mock_tracer.start_as_current_span.assert_called_once_with("test_span", attributes={"key": "value"})
         else:
             from pynector.telemetry.facade import TracingFacade
             from pynector.telemetry.tracing import NoOpSpan
             tracer = TracingFacade("test_tracer")
-            
+
             span = tracer.start_as_current_span("test_span", {"key": "value"})
-            
+
             assert isinstance(span, NoOpSpan)
             assert span.name == "test_span"
             assert span.attributes == {"key": "value"}
@@ -360,9 +360,9 @@ async def test_tracing_facade_start_async_span(has_opentelemetry):
                 from pynector.telemetry.facade import TracingFacade
                 from pynector.telemetry.tracing import AsyncSpanWrapper
                 tracer = TracingFacade("test_tracer")
-                
+
                 span_wrapper = await tracer.start_async_span("test_span", {"key": "value"})
-                
+
                 assert isinstance(span_wrapper, AsyncSpanWrapper)
                 assert span_wrapper.span == mock_span
                 mock_tracer.start_span.assert_called_once_with("test_span", attributes={"key": "value"})
@@ -370,9 +370,9 @@ async def test_tracing_facade_start_async_span(has_opentelemetry):
             from pynector.telemetry.facade import TracingFacade
             from pynector.telemetry.tracing import NoOpSpan
             tracer = TracingFacade("test_tracer")
-            
+
             span = await tracer.start_async_span("test_span", {"key": "value"})
-            
+
             assert isinstance(span, NoOpSpan)
             assert span.name == "test_span"
             assert span.attributes == {"key": "value"}
@@ -389,7 +389,7 @@ def test_logging_facade_init(has_structlog):
             with patch('pynector.telemetry.facade.structlog.get_logger', mock_get_logger):
                 from pynector.telemetry.facade import LoggingFacade
                 logger = LoggingFacade("test_logger")
-                
+
                 assert logger.name == "test_logger"
                 assert logger.logger == mock_logger
                 mock_get_logger.assert_called_once_with("test_logger")
@@ -397,7 +397,7 @@ def test_logging_facade_init(has_structlog):
             from pynector.telemetry.facade import LoggingFacade
             from pynector.telemetry.logging import NoOpLogger
             logger = LoggingFacade("test_logger")
-            
+
             assert logger.name == "test_logger"
             assert isinstance(logger.logger, NoOpLogger)
 
@@ -420,15 +420,15 @@ async def test_traced_async_operation():
     mock_tracer.start_as_current_async_span = MagicMock()
     mock_tracer.start_as_current_async_span.return_value.__aenter__ = MagicMock(return_value=mock_span)
     mock_tracer.start_as_current_async_span.return_value.__aexit__ = MagicMock(return_value=None)
-    
+
     # Test successful operation
     async with traced_async_operation(mock_tracer, "test_operation", {"key": "value"}) as span:
         assert span == mock_span
         # Perform some operation
         result = 42
-    
+
     mock_tracer.start_as_current_async_span.assert_called_once_with("test_operation", attributes={"key": "value"})
-    
+
     # Test operation with exception
     with pytest.raises(ValueError):
 @pytest.mark.asyncio
@@ -444,28 +444,28 @@ async def test_traced_gather(has_opentelemetry):
             mock_attach = MagicMock(return_value=mock_token)
             mock_detach = MagicMock()
             mock_get_current = MagicMock(return_value=mock_context)
-            
+
             # Create a mock tracer
             mock_span = MagicMock()
             mock_tracer = MagicMock()
             mock_tracer.start_as_current_async_span = MagicMock()
             mock_tracer.start_as_current_async_span.return_value.__aenter__ = MagicMock(return_value=mock_span)
             mock_tracer.start_as_current_async_span.return_value.__aexit__ = MagicMock(return_value=None)
-            
+
             with patch('pynector.telemetry.context.attach', mock_attach), \
                  patch('pynector.telemetry.context.detach', mock_detach), \
                  patch('pynector.telemetry.context.get_current', mock_get_current):
-                
+
                 # Create test coroutines
                 async def coro1():
                     return 1
-                
+
                 async def coro2():
                     return 2
-                
+
                 # Test traced_gather
                 results = await traced_gather(mock_tracer, [coro1(), coro2()], "test_gather")
-                
+
                 assert results == [1, 2]
                 mock_tracer.start_as_current_async_span.assert_called_once_with("test_gather")
                 assert mock_attach.call_count == 2
@@ -474,13 +474,13 @@ async def test_traced_gather(has_opentelemetry):
             # Create test coroutines
             async def coro1():
                 return 1
-            
+
             async def coro2():
                 return 2
-            
+
             # Test traced_gather without OpenTelemetry
             results = await traced_gather(MagicMock(), [coro1(), coro2()], "test_gather")
-            
+
             assert results == [1, 2]
 
 ### 4.6 Configuration Tests (`test_config.py`)
@@ -498,19 +498,19 @@ def test_get_env_bool():
     # Test with environment variable set to true
     with patch.dict(os.environ, {"TEST_BOOL": "true"}):
         assert get_env_bool("TEST_BOOL") is True
-    
+
     # Test with environment variable set to false
     with patch.dict(os.environ, {"TEST_BOOL": "false"}):
         assert get_env_bool("TEST_BOOL") is False
-    
+
     # Test with environment variable set to 1
     with patch.dict(os.environ, {"TEST_BOOL": "1"}):
         assert get_env_bool("TEST_BOOL") is True
-    
+
     # Test with environment variable set to 0
     with patch.dict(os.environ, {"TEST_BOOL": "0"}):
         assert get_env_bool("TEST_BOOL") is False
-    
+
     # Test with environment variable not set
     with patch.dict(os.environ, {}, clear=True):
         assert get_env_bool("TEST_BOOL") is False
@@ -522,12 +522,12 @@ def test_get_env_dict():
     with patch.dict(os.environ, {"TEST_DICT": "key1=value1,key2=value2"}):
         result = get_env_dict("TEST_DICT")
         assert result == {"key1": "value1", "key2": "value2"}
-    
+
     # Test with environment variable not set
     with patch.dict(os.environ, {}, clear=True):
         result = get_env_dict("TEST_DICT")
         assert result == {}
-        
+
         # Test with default value
         result = get_env_dict("TEST_DICT", {"default_key": "default_value"})
         assert result == {"default_key": "default_value"}
@@ -543,7 +543,7 @@ def test_configure_telemetry(has_opentelemetry, has_structlog):
     # Mock dependencies availability
     with patch('pynector.telemetry.config.HAS_OPENTELEMETRY', has_opentelemetry), \
          patch('pynector.telemetry.config.HAS_STRUCTLOG', has_structlog):
-        
+
         if not (has_opentelemetry or has_structlog):
             # If no dependencies are available, should return False
             assert configure_telemetry() is False
@@ -554,58 +554,58 @@ def test_configure_telemetry(has_opentelemetry, has_structlog):
                 mock_resource_create = MagicMock(return_value=mock_resource)
                 mock_tracer_provider = MagicMock()
                 mock_tracer_provider_class = MagicMock(return_value=mock_tracer_provider)
-                
+
                 with patch('pynector.telemetry.config.Resource.create', mock_resource_create), \
                      patch('pynector.telemetry.config.TracerProvider', mock_tracer_provider_class), \
                      patch('pynector.telemetry.config.trace.set_tracer_provider') as mock_set_tracer_provider, \
                      patch('pynector.telemetry.config._configure_exporters') as mock_configure_exporters:
-                    
+
                     # Test with default values
                     with patch.dict(os.environ, {}, clear=True):
                         result = configure_telemetry()
-                        
+
                         assert result is True
                         mock_resource_create.assert_called_once_with({"service.name": "unknown_service"})
                         mock_tracer_provider_class.assert_called_once_with(resource=mock_resource)
                         mock_set_tracer_provider.assert_called_once_with(mock_tracer_provider)
                         mock_configure_exporters.assert_called_once_with(mock_tracer_provider, None)
-                    
+
                     # Test with custom values
                     mock_resource_create.reset_mock()
                     mock_tracer_provider_class.reset_mock()
                     mock_set_tracer_provider.reset_mock()
                     mock_configure_exporters.reset_mock()
-                    
+
                     result = configure_telemetry(
                         service_name="test-service",
                         resource_attributes={"key": "value"},
                         trace_enabled=True,
                         trace_exporters=["console"]
                     )
-                    
+
                     assert result is True
                     mock_resource_create.assert_called_once_with({"key": "value", "service.name": "test-service"})
                     mock_tracer_provider_class.assert_called_once_with(resource=mock_resource)
                     mock_set_tracer_provider.assert_called_once_with(mock_tracer_provider)
                     mock_configure_exporters.assert_called_once_with(mock_tracer_provider, ["console"])
-            
+
             if has_structlog:
                 # Mock structlog module
                 with patch('pynector.telemetry.config._configure_structlog') as mock_configure_structlog:
                     # Test with default values
                     result = configure_telemetry()
-                    
+
                     assert result is (True if has_opentelemetry else False)
                     mock_configure_structlog.assert_called_once_with("INFO", None)
-                    
+
                     # Test with custom values
                     mock_configure_structlog.reset_mock()
-                    
+
                     result = configure_telemetry(
                         log_level="DEBUG",
                         log_processors=["custom_processor"]
                     )
-                    
+
                     assert result is (True if has_opentelemetry else False)
                     mock_configure_structlog.assert_called_once_with("DEBUG", ["custom_processor"])
 ````
@@ -637,13 +637,13 @@ async def test_telemetry_integration(has_opentelemetry, has_structlog):
          patch('pynector.telemetry.HAS_STRUCTLOG', has_structlog), \
          patch('pynector.telemetry.facade.HAS_STRUCTLOG', has_structlog), \
          patch('pynector.telemetry.config.HAS_STRUCTLOG', has_structlog):
-        
+
         # Configure telemetry
         configure_telemetry(service_name="test-service")
-        
+
         # Get tracer and logger
         tracer, logger = get_telemetry("test-module")
-        
+
         # Test synchronous tracing
         with tracer.start_as_current_span("test-span", {"key": "value"}) as span:
             # Log with structured data
@@ -723,10 +723,10 @@ pytest tests/telemetry/
        async with tracer.start_as_current_async_span("test-async-span") as span:
            # Log with structured data
            logger.info("test-async-event", data="test-async-data")
-           
+
            # Set span attribute
            span.set_attribute("async-result", "success")
-           
+
            # Test error handling
            try:
                raise ValueError("Test error")
@@ -786,12 +786,12 @@ def mock_detach(token):
 # Patch the opentelemetry.context.detach import in AsyncSpanWrapper.__aexit__
 with patch('pynector.telemetry.tracing.detach', mock_detach):
     wrapper = AsyncSpanWrapper(mock_span, mock_token)
-    
+
     async with wrapper as span:
         assert span is mock_span
         assert mock_span.entered is True
         assert mock_span.exited is False
-    
+
     assert mock_span.exited is True
     assert detach_called is True
     assert detach_token == mock_token

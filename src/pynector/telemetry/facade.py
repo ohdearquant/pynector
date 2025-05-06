@@ -152,7 +152,7 @@ class TracingFacade:
             except ImportError:
                 # Fallback if opentelemetry is not available
                 pass
-        
+
         # Use NoOpSpan if OpenTelemetry is not available or there was an ImportError
         span = NoOpSpan(name, attributes)
         try:

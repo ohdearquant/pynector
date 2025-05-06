@@ -1,32 +1,46 @@
 # Optional Observability
 
-Pynector provides optional observability features through its telemetry module, including distributed tracing and structured logging. These features are designed to be optional dependencies, meaning Pynector will work correctly even if the observability libraries are not installed.
+Pynector provides optional observability features through its telemetry module,
+including distributed tracing and structured logging. These features are
+designed to be optional dependencies, meaning Pynector will work correctly even
+if the observability libraries are not installed.
 
 ## Key Features
 
-- **Optional Dependencies**: OpenTelemetry for tracing and structlog for logging are optional dependencies.
+- **Optional Dependencies**: OpenTelemetry for tracing and structlog for logging
+  are optional dependencies.
 - **No-op Fallbacks**: Graceful degradation when dependencies are not available.
-- **Context Propagation**: Proper propagation of trace context across async boundaries.
-- **Flexible Configuration**: Configuration via environment variables or programmatic API.
-- **Unified API**: Consistent API regardless of whether dependencies are available.
+- **Context Propagation**: Proper propagation of trace context across async
+  boundaries.
+- **Flexible Configuration**: Configuration via environment variables or
+  programmatic API.
+- **Unified API**: Consistent API regardless of whether dependencies are
+  available.
 
 ## Components
 
 The telemetry module consists of the following components:
 
-1. **Telemetry Facade**: Provides a unified interface for tracing and logging operations, abstracting away the details of the underlying implementations.
+1. **Telemetry Facade**: Provides a unified interface for tracing and logging
+   operations, abstracting away the details of the underlying implementations.
 
-2. **No-op Implementations**: Provide fallbacks when dependencies are not available, ensuring that the library works correctly even without the optional dependencies.
+2. **No-op Implementations**: Provide fallbacks when dependencies are not
+   available, ensuring that the library works correctly even without the
+   optional dependencies.
 
-3. **Context Propagation**: Ensures trace context is properly maintained across async boundaries, allowing for accurate tracing of asynchronous operations.
+3. **Context Propagation**: Ensures trace context is properly maintained across
+   async boundaries, allowing for accurate tracing of asynchronous operations.
 
-4. **Configuration**: Provides flexible configuration options via environment variables and programmatic APIs.
+4. **Configuration**: Provides flexible configuration options via environment
+   variables and programmatic APIs.
 
-5. **Dependency Detection**: Detects whether optional dependencies are available and sets appropriate flags.
+5. **Dependency Detection**: Detects whether optional dependencies are available
+   and sets appropriate flags.
 
 ## Installation
 
-To use the observability features, you need to install Pynector with the optional dependencies:
+To use the observability features, you need to install Pynector with the
+optional dependencies:
 
 ```bash
 # Install with all observability dependencies
@@ -42,14 +56,14 @@ pip install pynector opentelemetry-api opentelemetry-sdk structlog
 
 The telemetry module can be configured using environment variables:
 
-| Variable | Description | Default |
-| --- | --- | --- |
-| `OTEL_SDK_DISABLED` | Disable OpenTelemetry tracing | `false` |
-| `OTEL_SERVICE_NAME` | Service name for traces | `"unknown_service"` |
-| `OTEL_RESOURCE_ATTRIBUTES` | Comma-separated key-value pairs for resource attributes | `{}` |
-| `OTEL_TRACES_EXPORTER` | Comma-separated list of exporters to use (`otlp`, `console`, `zipkin`) | `"otlp"` |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | Endpoint for OTLP exporter | OpenTelemetry default |
-| `OTEL_EXPORTER_ZIPKIN_ENDPOINT` | Endpoint for Zipkin exporter | Zipkin default |
+| Variable                        | Description                                                            | Default               |
+| ------------------------------- | ---------------------------------------------------------------------- | --------------------- |
+| `OTEL_SDK_DISABLED`             | Disable OpenTelemetry tracing                                          | `false`               |
+| `OTEL_SERVICE_NAME`             | Service name for traces                                                | `"unknown_service"`   |
+| `OTEL_RESOURCE_ATTRIBUTES`      | Comma-separated key-value pairs for resource attributes                | `{}`                  |
+| `OTEL_TRACES_EXPORTER`          | Comma-separated list of exporters to use (`otlp`, `console`, `zipkin`) | `"otlp"`              |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`   | Endpoint for OTLP exporter                                             | OpenTelemetry default |
+| `OTEL_EXPORTER_ZIPKIN_ENDPOINT` | Endpoint for Zipkin exporter                                           | Zipkin default        |
 
 ### Programmatic Configuration
 
@@ -75,7 +89,8 @@ configure_telemetry(
 
 ### Basic Usage
 
-The simplest way to use the telemetry module is through the `get_telemetry` function:
+The simplest way to use the telemetry module is through the `get_telemetry`
+function:
 
 ```python
 from pynector.telemetry import get_telemetry
@@ -90,15 +105,15 @@ logger.info("Operation started", operation="process_data")
 with tracer.start_as_current_span("process_data") as span:
     # Add attributes to the span
     span.set_attribute("data.size", 100)
-    
+
     # Do some work...
-    
+
     # Log within the span context (trace_id and span_id will be included)
     logger.info("Processing data", items=100)
-    
+
     # Record events
     span.add_event("data_validated", {"valid_items": 95})
-    
+
     # Handle errors
     try:
         # Do something that might fail
@@ -130,17 +145,17 @@ async def process_item(item):
 async def main():
     async with tracer.start_as_current_async_span("main_process") as span:
         logger.info("Starting batch processing")
-        
+
         # Process items in parallel while maintaining trace context
         from pynector.telemetry.context import traced_gather
-        
+
         items = [1, 2, 3, 4, 5]
         results = await traced_gather(
             tracer,
             [process_item(item) for item in items],
             name="parallel_processing"
         )
-        
+
         logger.info("Batch processing complete", results=results)
         return results
 
@@ -150,7 +165,8 @@ asyncio.run(main())
 
 ### Context Propagation Utilities
 
-The telemetry module provides utilities for propagating context across async boundaries:
+The telemetry module provides utilities for propagating context across async
+boundaries:
 
 ```python
 from pynector.telemetry import get_telemetry
@@ -170,7 +186,7 @@ async def example_2():
     async def task(i):
         logger.info(f"Task {i} started")
         return i * 2
-    
+
     results = await traced_gather(
         tracer,
         [task(i) for i in range(5)],
@@ -181,11 +197,11 @@ async def example_2():
 # Use traced_task_group for more complex task management (requires anyio)
 async def example_3():
     task_group = await traced_task_group(tracer, "task_group_example")
-    
+
     async def worker(name):
         logger.info(f"Worker {name} started")
         # Trace context is propagated automatically
-    
+
     async with task_group:
         task_group.start_soon(worker, "A")
         task_group.start_soon(worker, "B")
@@ -193,7 +209,10 @@ async def example_3():
 
 ## Behavior When Dependencies Are Missing
 
-When the optional dependencies (OpenTelemetry and/or structlog) are not available, the telemetry module provides no-op implementations that maintain the same API but do nothing. This ensures that your code will work correctly even if the dependencies are not installed.
+When the optional dependencies (OpenTelemetry and/or structlog) are not
+available, the telemetry module provides no-op implementations that maintain the
+same API but do nothing. This ensures that your code will work correctly even if
+the dependencies are not installed.
 
 ### Tracing Without OpenTelemetry
 
@@ -201,7 +220,8 @@ If OpenTelemetry is not available:
 
 - `TracingFacade` will use `NoOpSpan` implementations
 - Spans will be created but will not record any data
-- All span methods (`set_attribute`, `add_event`, etc.) will be available but will do nothing
+- All span methods (`set_attribute`, `add_event`, etc.) will be available but
+  will do nothing
 - Context propagation utilities will fall back to simpler implementations
 
 ### Logging Without structlog
@@ -221,7 +241,9 @@ The telemetry module supports multiple OpenTelemetry exporters:
 - **Console**: Print traces to the console (useful for debugging)
 - **Zipkin**: Send traces to a Zipkin server
 
-You can configure which exporters to use via the `OTEL_TRACES_EXPORTER` environment variable or the `trace_exporters` parameter in `configure_telemetry()`.
+You can configure which exporters to use via the `OTEL_TRACES_EXPORTER`
+environment variable or the `trace_exporters` parameter in
+`configure_telemetry()`.
 
 ### Structured Logging
 
@@ -233,16 +255,20 @@ The telemetry module uses structlog for structured logging, which provides:
 
 ## Best Practices
 
-1. **Initialize Early**: Call `configure_telemetry()` early in your application startup.
+1. **Initialize Early**: Call `configure_telemetry()` early in your application
+   startup.
 
 2. **Use Descriptive Names**: Use descriptive names for spans and log events.
 
-3. **Add Context to Logs**: Include relevant context in log entries using keyword arguments.
+3. **Add Context to Logs**: Include relevant context in log entries using
+   keyword arguments.
 
 4. **Propagate Context**: Use the context propagation utilities for async code.
 
 5. **Handle Errors**: Record exceptions in spans and set appropriate status.
 
-6. **Clean Up Resources**: Use context managers (`with` and `async with`) to ensure proper cleanup.
+6. **Clean Up Resources**: Use context managers (`with` and `async with`) to
+   ensure proper cleanup.
 
-7. **Consider Performance**: Be mindful of the performance impact of tracing and logging in hot paths.
+7. **Consider Performance**: Be mindful of the performance impact of tracing and
+   logging in hot paths.
