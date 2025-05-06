@@ -70,6 +70,12 @@ sdk = [
     "anthropic>=0.8.0",
 ]
 
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.12",
+    "mkdocstrings[python]>=0.29.1",
+]
+
 all = [
     "opentelemetry-api>=1.26.0",
     "opentelemetry-sdk>=1.26.0",
@@ -79,9 +85,6 @@ all = [
     "openai>=1.12.0",
     "anthropic>=0.8.0",
 ]
-
-
-
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pynector"]
