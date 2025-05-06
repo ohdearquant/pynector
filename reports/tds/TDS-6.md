@@ -81,11 +81,11 @@ components:
 │Transport│ │  AnyIO      │ │Telemetry │
 │Factory  │ │Task Groups  │ │Facade    │
 └─────────┘ └─────────────┘ └──────────┘
-   │ creates      
-   ▼              
-┌─────────┐ 
-│Transport│ 
-│Instance │ 
+   │ creates
+   ▼
+┌─────────┐
+│Transport│
+│Instance │
 └─────────┘
 ```
 
@@ -109,10 +109,10 @@ The core `Pynector` class has the following dependencies:
 ```python
 class Pynector:
     """
-    The core client class for making requests through various transports with support for 
+    The core client class for making requests through various transports with support for
     batch processing, timeouts, and optional observability.
     """
-    
+
     def __init__(
         self,
         transport: Optional[TransportProtocol] = None,
@@ -122,7 +122,7 @@ class Pynector:
         **transport_options
     ):
         """Initialize the Pynector instance.
-        
+
         Args:
             transport: Optional pre-configured transport instance to use.
             transport_type: Type of transport to create if transport is not provided.
@@ -131,30 +131,30 @@ class Pynector:
             **transport_options: Additional options passed to the transport factory.
         """
         ...
-        
+
     async def request(
-        self, 
-        data: Any, 
+        self,
+        data: Any,
         timeout: Optional[float] = None,
         **options
     ) -> Any:
         """Send a single request and return the response.
-        
+
         Args:
             data: The data to send.
             timeout: Optional timeout in seconds for this specific request.
             **options: Additional options for the request.
-            
+
         Returns:
             The response data.
-            
+
         Raises:
             TransportError: If there is an error with the transport.
             TimeoutError: If the request times out.
             PynectorError: For other errors.
         """
         ...
-        
+
     async def batch_request(
         self,
         requests: List[Tuple[Any, Dict]],
@@ -164,35 +164,35 @@ class Pynector:
         **options
     ) -> List[Any]:
         """Send multiple requests in parallel and return the responses.
-        
+
         Args:
             requests: List of (data, options) tuples.
             max_concurrency: Maximum number of concurrent requests.
             timeout: Optional timeout in seconds for the entire batch.
             raise_on_error: Whether to raise on the first error.
             **options: Additional options for all requests.
-            
+
         Returns:
             List of responses or exceptions.
-            
+
         Raises:
             TimeoutError: If the batch times out and raise_on_error is True.
             PynectorError: For other errors if raise_on_error is True.
         """
         ...
-        
+
     async def aclose(self) -> None:
         """Close the Pynector instance and release resources."""
         ...
-        
+
     async def __aenter__(self) -> 'Pynector':
         """Enter the async context."""
         ...
-        
+
     async def __aexit__(
-        self, 
-        exc_type: Optional[Type[BaseException]], 
-        exc_val: Optional[BaseException], 
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType]
     ) -> None:
         """Exit the async context."""
@@ -214,12 +214,12 @@ def _get_config(self, key: str, default: Any = None) -> Any:
     # 1. Check instance configuration
     if key in self._config:
         return self._config[key]
-        
+
     # 2. Check environment variables
     env_key = f"PYNECTOR_{key.upper()}"
     if env_key in os.environ:
         return os.environ[env_key]
-        
+
     # 3. Return default value
     return default
 ```
@@ -247,15 +247,15 @@ def __init__(
     self._config = config or {}
     self._transport_type = transport_type
     self._transport_options = transport_options
-    
+
     # Set up transport
     self._transport = transport
     self._owns_transport = transport is None
     self._transport_initialized = False
-    
+
     # Set up telemetry
     self._tracer, self._logger = get_telemetry("pynector.core") if enable_telemetry else (None, None)
-    
+
     # Validate configuration
     self._validate_config()
 ```
@@ -271,17 +271,17 @@ async def __aenter__(self) -> 'Pynector':
     if self._owns_transport:
         await transport.__aenter__()
     return self
-    
+
 async def __aexit__(
-    self, 
-    exc_type: Optional[Type[BaseException]], 
-    exc_val: Optional[BaseException], 
+    self,
+    exc_type: Optional[Type[BaseException]],
+    exc_val: Optional[BaseException],
     exc_tb: Optional[TracebackType]
 ) -> None:
     """Exit the async context."""
     if self._owns_transport and self._transport is not None:
         await self._transport.__aexit__(exc_type, exc_val, exc_tb)
-        
+
 async def aclose(self) -> None:
     """Close the Pynector instance and release resources."""
     if self._owns_transport and self._transport is not None:
@@ -303,15 +303,15 @@ async def _get_transport(self) -> TransportProtocol:
         # Get transport factory
         factory_registry = get_transport_factory_registry()
         factory = factory_registry.get(self._transport_type)
-        
+
         # Create transport
         if self._transport is None:
             self._transport = factory.create_transport(**self._transport_options)
-            
+
         # Connect the transport
         await self._transport.connect()
         self._transport_initialized = True
-        
+
     return self._transport
 ```
 
@@ -364,10 +364,10 @@ async def batch_request(
 ) -> List[Any]:
     """Send multiple requests in parallel and return the responses."""
     results = [None] * len(requests)
-    
+
     # Create a capacity limiter if max_concurrency is specified
     limiter = anyio.CapacityLimiter(max_concurrency) if max_concurrency else None
-    
+
     async def process_request(index, data, request_options):
         try:
             if limiter:
@@ -380,7 +380,7 @@ async def batch_request(
             results[index] = e
             if raise_on_error:
                 raise
-    
+
     # Apply timeout if specified
     if timeout:
         async with anyio.fail_after(timeout):
@@ -391,7 +391,7 @@ async def batch_request(
         async with anyio.create_task_group() as tg:
             for i, (data, request_options) in enumerate(requests):
                 await tg.start_soon(process_request, i, data, request_options)
-                
+
     return results
 ```
 
@@ -401,18 +401,18 @@ Timeouts are handled using AnyIO's `fail_after` and `move_on_after` functions:
 
 ```python
 async def request(
-    self, 
-    data: Any, 
+    self,
+    data: Any,
     timeout: Optional[float] = None,
     **options
 ) -> Any:
     """Send a single request and return the response."""
     transport = await self._get_transport()
-    
+
     # Get timeout from options, instance config, or default
     if timeout is None:
         timeout = self._get_config("timeout")
-    
+
     if timeout:
         # Use fail_after to raise an exception on timeout
         async with anyio.fail_after(float(timeout)):
@@ -491,14 +491,14 @@ async def batch_request(
 ) -> List[Any]:
     """Send multiple requests in parallel and return the responses."""
     results = [None] * len(requests)
-    
+
     if self._tracer:
         with self._tracer.start_as_current_span("pynector.batch_request") as span:
             span.set_attribute("request.count", len(requests))
             # Capture current context with the active span
             from opentelemetry.context import attach, detach, get_current
             context = get_current()
-            
+
             async def process_request(index, data, request_options):
                 # Attach the captured context to this task
                 token = attach(context)
@@ -507,11 +507,11 @@ async def batch_request(
                 finally:
                     # Always detach the context when done
                     detach(token)
-            
+
             # ... run task group ...
     else:
         # ... regular implementation without tracing ...
-                
+
     return results
 ```
 
@@ -529,17 +529,17 @@ async def request(self, data: Any, timeout: Optional[float] = None, **options) -
             timeout=timeout,
             options=str(options)
         )
-    
+
     try:
         result = await self._perform_request_with_timeout(data, timeout, **options)
-        
+
         if self._logger:
             self._logger.info(
                 "request.complete",
                 data_size=len(str(data)),
                 result_size=len(str(result))
             )
-            
+
         return result
     except Exception as e:
         if self._logger:
@@ -561,15 +561,15 @@ The `Pynector` class defines a hierarchy of error types:
 class PynectorError(Exception):
     """Base class for all Pynector errors."""
     pass
-    
+
 class TransportError(PynectorError):
     """Error related to transport operations."""
     pass
-    
+
 class ConfigurationError(PynectorError):
     """Error related to configuration."""
     pass
-    
+
 class TimeoutError(PynectorError):
     """Error related to timeouts."""
     pass
@@ -611,7 +611,7 @@ async def request_with_retry(
 ) -> Any:
     """Send a request with retry for transient errors."""
     last_error = None
-    
+
     for attempt in range(max_retries):
         try:
             return await self.request(data, **options)
@@ -622,7 +622,7 @@ async def request_with_retry(
                 await anyio.sleep(retry_delay * (2 ** attempt))
             else:
                 break
-    
+
     raise last_error
 ```
 
@@ -695,14 +695,14 @@ async def main():
             ({"query": "data2"}, {"timeout": 5.0}),
             ({"query": "data3"}, {"headers": {"X-Custom": "value"}})
         ]
-        
+
         # Send batch request
         results = await client.batch_request(
             requests,
             max_concurrency=10,
             timeout=30.0
         )
-        
+
         # Process results
         for i, result in enumerate(results):
             if isinstance(result, Exception):
@@ -722,7 +722,7 @@ async def main():
         service_name="my-service",
         resource_attributes={"deployment.environment": "production"}
     )
-    
+
     # Create a client with telemetry enabled
     async with Pynector(
         transport_type="http",

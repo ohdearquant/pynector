@@ -66,22 +66,22 @@ transports:
             async for chunk in transport.receive():
                 # Process response
                 pass
-        
+
     async def batch_request(self, requests: List[Tuple[Any, Dict]], **options) -> List[Any]:
         """Send multiple requests in parallel and return the responses."""
         results = [None] * len(requests)
-        
+
         async def process_request(index, data, request_options):
             try:
                 result = await self.request(data, **(options | request_options))
                 results[index] = result
             except Exception as e:
                 results[index] = e
-        
+
         async with anyio.create_task_group() as tg:
             for i, (data, request_options) in enumerate(requests):
                 await tg.start_soon(process_request, i, data, request_options)
-                
+
         return results
 
 ````
@@ -153,7 +153,7 @@ class Pynector:
     ):
         # ... other initialization ...
         self._tracer, self._logger = get_telemetry("pynector.core") if enable_telemetry else (None, None)
-        
+
     async def request(self, data: Any, **options) -> Any:
         """Send a single request and return the response."""
         if self._tracer:
@@ -188,13 +188,13 @@ class should ensure that context is properly propagated across async boundaries:
 async def batch_request(self, requests: List[Tuple[Any, Dict]], **options) -> List[Any]:
     """Send multiple requests in parallel and return the responses."""
     results = [None] * len(requests)
-    
+
     if self._tracer:
         with self._tracer.start_as_current_span("pynector.batch_request") as span:
             span.set_attribute("request.count", len(requests))
             # Capture current context with the active span
             context = get_current()
-            
+
             async def process_request(index, data, request_options):
                 # Attach the captured context to this task
                 token = attach(context)
@@ -206,14 +206,14 @@ async def batch_request(self, requests: List[Tuple[Any, Dict]], **options) -> Li
                 finally:
                     # Always detach the context when done
                     detach(token)
-            
+
             async with anyio.create_task_group() as tg:
                 for i, (data, request_options) in enumerate(requests):
                     await tg.start_soon(process_request, i, data, request_options)
     else:
         # Regular implementation without tracing
         # ...
-                
+
     return results
 ```
 
@@ -253,18 +253,18 @@ class Pynector:
     ):
         """Initialize the Pynector instance with configuration."""
         self._config = config or {}
-        
+
     def _get_config(self, key: str, default: Any = None) -> Any:
         """Get a configuration value from the hierarchy."""
         # 1. Check instance configuration
         if key in self._config:
             return self._config[key]
-            
+
         # 2. Check environment variables
         env_key = f"PYNECTOR_{key.upper()}"
         if env_key in os.environ:
             return os.environ[env_key]
-            
+
         # 3. Return default value
         return default
 ```
@@ -309,14 +309,14 @@ to ensure proper resource management:
 ```python
 class Pynector:
     # ... other methods ...
-    
+
     async def __aenter__(self) -> 'Pynector':
         """Enter the async context."""
         transport = await self._get_transport()
         if self._owns_transport:
             await transport.__aenter__()
         return self
-        
+
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit the async context."""
         if self._owns_transport and self._transport is not None:
@@ -355,7 +355,7 @@ usage:
 # Context-managed usage
 async with Pynector() as client:
     result = await client.request(data)
-    
+
 # Non-context-managed usage
 client = Pynector()
 try:
@@ -402,14 +402,14 @@ exa-code.kiwi.com/articles/code-design-principles-for-public-apis-of-modules/)
 # Good: Clear method names with appropriate parameters
 async def request(self, data: Any, **options) -> Any:
     """Send a single request and return the response."""
-    
+
 async def batch_request(self, requests: List[Tuple[Any, Dict]], **options) -> List[Any]:
     """Send multiple requests in parallel and return the responses."""
-    
+
 # Bad: Unclear method names or inappropriate parameters
 async def process(self, data: Any) -> Any:
     """Process data."""
-    
+
 async def multi(self, data_list: List[Any]) -> List[Any]:
     """Process multiple data items."""
 ```
@@ -422,15 +422,15 @@ Error handling should be consistent and informative:
 class PynectorError(Exception):
     """Base class for all Pynector errors."""
     pass
-    
+
 class TransportError(PynectorError):
     """Error related to transport operations."""
     pass
-    
+
 class ConfigurationError(PynectorError):
     """Error related to configuration."""
     pass
-    
+
 class TimeoutError(PynectorError):
     """Error related to timeouts."""
     pass
@@ -445,16 +445,16 @@ have comprehensive docstrings and examples:
 class Pynector:
     """
     Pynector client for making requests through various transports.
-    
+
     This class provides a high-level API for making requests through
     different transport mechanisms (HTTP, WebSocket, etc.) with support
     for batch processing, timeouts, and observability.
-    
+
     Examples:
         # Simple request
         async with Pynector() as client:
             result = await client.request(data)
-            
+
         # Batch request
         async with Pynector() as client:
             results = await client.batch_request([
@@ -462,7 +462,7 @@ class Pynector:
                 (data2, {"timeout": 5.0}),
             ])
     """
-    
+
     def __init__(
         self,
         transport: Optional[TransportProtocol] = None,
@@ -473,7 +473,7 @@ class Pynector:
     ):
         """
         Initialize the Pynector instance.
-        
+
         Args:
             transport: Optional transport instance to use.
             transport_type: Type of transport to create if not provided.
@@ -527,10 +527,10 @@ async def batch_request(
 ) -> List[Any]:
     """Send multiple requests with optional concurrency limit."""
     results = [None] * len(requests)
-    
+
     # Create a capacity limiter if max_concurrency is specified
     limiter = anyio.CapacityLimiter(max_concurrency) if max_concurrency else None
-    
+
     async def process_request(index, data, request_options):
         try:
             if limiter:
@@ -541,11 +541,11 @@ async def batch_request(
             results[index] = result
         except Exception as e:
             results[index] = e
-    
+
     async with anyio.create_task_group() as tg:
         for i, (data, request_options) in enumerate(requests):
             await tg.start_soon(process_request, i, data, request_options)
-            
+
     return results
 ```
 
@@ -563,7 +563,7 @@ async def batch_request(
 ) -> List[Any]:
     """Send multiple requests with error handling options."""
     results = [None] * len(requests)
-    
+
     async def process_request(index, data, request_options):
         try:
             result = await self.request(data, **(options | request_options))
@@ -572,11 +572,11 @@ async def batch_request(
             results[index] = e
             if raise_on_error:
                 raise
-    
+
     async with anyio.create_task_group() as tg:
         for i, (data, request_options) in enumerate(requests):
             await tg.start_soon(process_request, i, data, request_options)
-            
+
     return results
 ```
 
@@ -627,16 +627,16 @@ from pynector.errors import PynectorError, TransportError, ConfigurationError, T
 class Pynector:
     """
     Pynector client for making requests through various transports.
-    
+
     This class provides a high-level API for making requests through
     different transport mechanisms (HTTP, WebSocket, etc.) with support
     for batch processing, timeouts, and observability.
-    
+
     Examples:
         # Simple request
         async with Pynector() as client:
             result = await client.request(data)
-            
+
         # Batch request
         async with Pynector() as client:
             results = await client.batch_request([
@@ -644,7 +644,7 @@ class Pynector:
                 (data2, {"timeout": 5.0}),
             ])
     """
-    
+
     def __init__(
         self,
         transport: Optional[TransportProtocol] = None,
@@ -655,7 +655,7 @@ class Pynector:
     ):
         """
         Initialize the Pynector instance.
-        
+
         Args:
             transport: Optional transport instance to use.
             transport_type: Type of transport to create if not provided.
@@ -670,7 +670,7 @@ class Pynector:
         self._config = config or {}
         self._tracer, self._logger = get_telemetry("pynector.core") if enable_telemetry else (None, None)
         self._validate_config()
-        
+
     def _validate_config(self) -> None:
         """Validate the configuration."""
         # Example validation
@@ -682,21 +682,21 @@ class Pynector:
                     raise ConfigurationError("Timeout must be positive")
             except ValueError:
                 raise ConfigurationError(f"Invalid timeout value: {timeout}")
-                
+
     def _get_config(self, key: str, default: Any = None) -> Any:
         """Get a configuration value from the hierarchy."""
         # 1. Check instance configuration
         if key in self._config:
             return self._config[key]
-            
+
         # 2. Check environment variables
         env_key = f"PYNECTOR_{key.upper()}"
         if env_key in os.environ:
             return os.environ[env_key]
-            
+
         # 3. Return default value
         return default
-        
+
     async def _get_transport(self) -> TransportProtocol:
         """Get or create a transport instance."""
         if self._transport is None:
@@ -710,23 +710,23 @@ class Pynector:
             # Add more transport types as needed
             else:
                 raise ConfigurationError(f"Unsupported transport type: {self._transport_type}")
-                
+
             # Connect the transport
             await self._transport.connect()
-            
+
         return self._transport
-        
+
     async def request(self, data: Any, **options) -> Any:
         """
         Send a single request and return the response.
-        
+
         Args:
             data: The data to send.
             **options: Additional options for the request.
-            
+
         Returns:
             The response data.
-            
+
         Raises:
             TransportError: If there is an error with the transport.
             TimeoutError: If the request times out.
@@ -744,14 +744,14 @@ class Pynector:
                     raise
         else:
             return await self._perform_request(data, **options)
-            
+
     async def _perform_request(self, data: Any, **options) -> Any:
         """Perform the actual request."""
         transport = await self._get_transport()
-        
+
         # Get timeout from options or config
         timeout = options.pop("timeout", self._get_config("timeout"))
-        
+
         if timeout:
             async with anyio.fail_after(float(timeout)):
                 await transport.send(data, **options)
@@ -765,7 +765,7 @@ class Pynector:
             async for chunk in transport.receive():
                 result += chunk
             return result
-            
+
     async def batch_request(
         self,
         requests: List[Tuple[Any, Dict]],
@@ -775,28 +775,28 @@ class Pynector:
     ) -> List[Any]:
         """
         Send multiple requests in parallel and return the responses.
-        
+
         Args:
             requests: List of (data, options) tuples.
             max_concurrency: Maximum number of concurrent requests.
             raise_on_error: Whether to raise on the first error.
             **options: Additional options for all requests.
-            
+
         Returns:
             List of responses or exceptions.
         """
         results = [None] * len(requests)
-        
+
         # Create a capacity limiter if max_concurrency is specified
         limiter = anyio.CapacityLimiter(max_concurrency) if max_concurrency else None
-        
+
         if self._tracer:
             with self._tracer.start_as_current_span("pynector.batch_request") as span:
                 span.set_attribute("request.count", len(requests))
                 # Capture current context with the active span
                 from opentelemetry.context import attach, detach, get_current
                 context = get_current()
-                
+
                 async def process_request(index, data, request_options):
                     # Attach the captured context to this task
                     token = attach(context)
@@ -814,7 +814,7 @@ class Pynector:
                     finally:
                         # Always detach the context when done
                         detach(token)
-                
+
                 async with anyio.create_task_group() as tg:
                     for i, (data, request_options) in enumerate(requests):
                         await tg.start_soon(process_request, i, data, request_options)
@@ -831,25 +831,25 @@ class Pynector:
                     results[index] = e
                     if raise_on_error:
                         raise
-            
+
     async with anyio.create_task_group() as tg:
                 for i, (data, request_options) in enumerate(requests):
                     await tg.start_soon(process_request, i, data, request_options)
-                    
+
         return results
-        
+
     async def __aenter__(self) -> 'Pynector':
         """Enter the async context."""
         transport = await self._get_transport()
         if self._owns_transport:
             await transport.__aenter__()
         return self
-        
+
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit the async context."""
         if self._owns_transport and self._transport is not None:
             await self._transport.__aexit__(exc_type, exc_val, exc_tb)
-            
+
     async def close(self) -> None:
         """Close the Pynector instance and release resources."""
         if self._owns_transport and self._transport is not None:

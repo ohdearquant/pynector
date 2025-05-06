@@ -312,7 +312,7 @@ from contextlib import asynccontextmanager
 
 class HttpxTransport:
     """HTTP transport implementation using httpx."""
-    
+
     def __init__(
         self,
         base_url: str = "",
@@ -328,7 +328,7 @@ class HttpxTransport:
         self.max_retries = max_retries
         self.retry_backoff_factor = retry_backoff_factor
         self._client: Optional[httpx.AsyncClient] = None
-        
+
     async def connect(self) -> None:
         """Establish the connection."""
         if self._client is None:
@@ -337,30 +337,30 @@ class HttpxTransport:
                 headers=self.headers,
                 timeout=self.timeout,
             )
-        
+
     async def disconnect(self) -> None:
         """Close the connection."""
         if self._client is not None:
             await self._client.aclose()
             self._client = None
-    
+
     async def send(self, data: bytes, **kwargs) -> None:
         """Send data over the transport."""
         if self._client is None:
             raise RuntimeError("Transport not connected")
-        
+
         url = kwargs.pop("url", "")
         method = kwargs.pop("method", "POST")
-        
+
         # Extract common parameters
         params = kwargs.pop("params", None)
         headers = kwargs.pop("headers", None)
-        
+
         # Handle different content types
         json_data = kwargs.pop("json", None)
         form_data = kwargs.pop("form", None)
         files = kwargs.pop("files", None)
-        
+
         # Implement retry logic with exponential backoff
         retry_count = 0
         while True:
@@ -382,11 +382,11 @@ class HttpxTransport:
                 # Don't retry client errors (4xx) except specific ones
                 if e.response.status_code < 500 and e.response.status_code != 429:
                     raise
-                
+
                 retry_count += 1
                 if retry_count > self.max_retries:
                     raise
-                
+
                 # Calculate backoff time with exponential backoff
                 backoff_time = self.retry_backoff_factor * (2 ** (retry_count - 1))
                 await asyncio.sleep(backoff_time)
@@ -394,24 +394,24 @@ class HttpxTransport:
                 retry_count += 1
                 if retry_count > self.max_retries:
                     raise
-                
+
                 backoff_time = self.retry_backoff_factor * (2 ** (retry_count - 1))
                 await asyncio.sleep(backoff_time)
-    
+
     async def receive(self) -> AsyncIterator[bytes]:
         """Receive data from the transport."""
         if self._client is None:
             raise RuntimeError("Transport not connected")
-        
+
         # This is a placeholder - actual implementation would depend on
         # how the transport is expected to receive data
         yield b""
-    
+
     async def __aenter__(self) -> 'HttpxTransport':
         """Enter the async context."""
         await self.connect()
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit the async context."""
         await self.disconnect()

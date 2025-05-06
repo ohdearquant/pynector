@@ -70,27 +70,27 @@ class HTTPTransport(Generic[T]):
         # Initialize configuration
         self._client = None
         self._message_type = None
-        
+
     async def connect(self):
         # Create httpx.AsyncClient
-        
+
     async def disconnect(self):
         # Close httpx.AsyncClient
-        
+
     async def send(self, message):
         # Extract headers and prepare request
         # Send request with retry logic
-        
+
     async def receive(self):
         # Yield response messages
-        
+
     # Helper methods
     def _extract_headers(self, message):
         # Extract headers from message
-        
+
     def _prepare_request(self, message):
         # Prepare request parameters
-        
+
     def _handle_error_response(self, response):
         # Map HTTP errors to transport errors
 ```
@@ -138,22 +138,22 @@ The `HttpMessage` class will be implemented in
 # Pseudocode for HttpMessage
 class HttpMessage:
     """HTTP message implementation."""
-    
+
     content_type: ClassVar[str] = "application/json"
-    
+
     def __init__(self, method, url, headers, params, json_data, form_data, files, content):
         # Initialize message properties
-        
+
     def serialize(self):
         # Serialize message to bytes
-        
+
     @classmethod
     def deserialize(cls, data):
         # Deserialize bytes to message
-        
+
     def get_headers(self):
         # Get message headers
-        
+
     def get_payload(self):
         # Get message payload
 ```
@@ -167,10 +167,10 @@ The `HTTPTransportFactory` class will be implemented in
 # Pseudocode for HTTPTransportFactory
 class HTTPTransportFactory:
     """Factory for creating HTTP transport instances."""
-    
+
     def __init__(self, base_url, message_type, default_headers, ...):
         # Initialize factory with default configuration
-        
+
     def create_transport(self, **kwargs):
         # Create a new HTTP transport instance with merged configuration
 ```
@@ -193,7 +193,7 @@ async def stream_response(self, message):
 class HTTPTransportWithCircuitBreaker(HTTPTransport[T]):
     def __init__(self, *args, failure_threshold, reset_timeout, **kwargs):
         # Initialize circuit breaker state
-        
+
     async def send(self, message):
         # Check circuit state before sending
         # Track failures and open circuit if threshold exceeded
