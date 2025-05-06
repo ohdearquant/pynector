@@ -44,11 +44,11 @@ jobs:
           uv sync --extra docs
 
       - name: Build documentation
-        run: mkdocs build --verbose --strict
+        run: uv run mkdocs build --verbose --strict
 
       - name: Deploy documentation
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: mkdocs gh-deploy --force
+        run: uv run mkdocs gh-deploy --force
 
       - name: Upload documentation artifact
         uses: actions/upload-artifact@v4
