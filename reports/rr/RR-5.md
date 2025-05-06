@@ -259,7 +259,7 @@ class SDKTransport:
         self.api_key = api_key
         self.sdk_type = sdk_type
         self._client = None
-        
+
     async def connect(self):
         if self.sdk_type == "openai":
             self._client = OpenAI(api_key=self.api_key)
@@ -291,11 +291,11 @@ adapter classes for each SDK:
 ```python
 class SDKAdapter:
     """Base adapter class for SDK-specific implementations."""
-    
+
     async def complete(self, prompt, **kwargs):
         """Generate a completion for the given prompt."""
         raise NotImplementedError
-        
+
     async def stream(self, prompt, **kwargs):
         """Stream a completion for the given prompt."""
         raise NotImplementedError
@@ -303,7 +303,7 @@ class SDKAdapter:
 class OpenAIAdapter(SDKAdapter):
     def __init__(self, client):
         self.client = client
-        
+
     async def complete(self, prompt, **kwargs):
         messages = [{"role": "user", "content": prompt}]
         response = await self.client.chat.completions.create(
@@ -311,7 +311,7 @@ class OpenAIAdapter(SDKAdapter):
             **kwargs
         )
         return response.choices[0].message.content
-        
+
     async def stream(self, prompt, **kwargs):
         messages = [{"role": "user", "content": prompt}]
         async with self.client.chat.completions.stream(
@@ -325,14 +325,14 @@ class OpenAIAdapter(SDKAdapter):
 class AnthropicAdapter(SDKAdapter):
     def __init__(self, client):
         self.client = client
-        
+
     async def complete(self, prompt, **kwargs):
         response = await self.client.messages.create(
             messages=[{"role": "user", "content": prompt}],
             **kwargs
         )
         return response.content[0].text
-        
+
     async def stream(self, prompt, **kwargs):
         with self.client.messages.create.with_streaming_response(
             messages=[{"role": "user", "content": prompt}],
@@ -388,7 +388,7 @@ class SDKTransportError(Exception):
 
 class SDKTransport:
     """SDK transport implementation using OpenAI and Anthropic SDKs."""
-    
+
     def __init__(
         self,
         sdk_type: str = "openai",
@@ -403,12 +403,12 @@ class SDKTransport:
         self.timeout = timeout
         self._client = None
         self._adapter = None
-        
+
     async def connect(self) -> None:
         """Establish the connection."""
         if self._client is not None:
             return
-            
+
         try:
             if self.sdk_type == "openai":
                 self._client = openai.AsyncOpenAI(
@@ -428,51 +428,51 @@ class SDKTransport:
                 raise ValueError(f"Unsupported SDK type: {self.sdk_type}")
         except Exception as e:
             raise SDKTransportError(f"Failed to connect: {str(e)}") from e
-        
+
     async def disconnect(self) -> None:
         """Close the connection."""
         self._client = None
         self._adapter = None
-    
+
     async def send(self, data: bytes, **kwargs) -> None:
         """Send data over the transport."""
         if self._adapter is None:
             raise SDKTransportError("Transport not connected")
-            
+
         try:
             prompt = data.decode("utf-8")
             await self._adapter.complete(prompt, **kwargs)
         except Exception as e:
             raise SDKTransportError(f"Failed to send data: {str(e)}") from e
-    
+
     async def receive(self) -> AsyncIterator[bytes]:
         """Receive data from the transport."""
         if self._adapter is None:
             raise SDKTransportError("Transport not connected")
-            
+
         try:
             prompt = "Generate a response"  # Default prompt
             async for chunk in self._adapter.stream(prompt):
                 yield chunk
         except Exception as e:
             raise SDKTransportError(f"Failed to receive data: {str(e)}") from e
-    
+
     async def __aenter__(self) -> 'SDKTransport':
         """Enter the async context."""
         await self.connect()
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit the async context."""
         await self.disconnect()
 
 class SDKAdapter:
     """Base adapter class for SDK-specific implementations."""
-    
+
     async def complete(self, prompt, **kwargs):
         """Generate a completion for the given prompt."""
         raise NotImplementedError
-        
+
     async def stream(self, prompt, **kwargs):
         """Stream a completion for the given prompt."""
         raise NotImplementedError
@@ -480,7 +480,7 @@ class SDKAdapter:
 class OpenAIAdapter(SDKAdapter):
     def __init__(self, client):
         self.client = client
-        
+
     async def complete(self, prompt, **kwargs):
         messages = [{"role": "user", "content": prompt}]
         response = await self.client.chat.completions.create(
@@ -488,7 +488,7 @@ class OpenAIAdapter(SDKAdapter):
             model=kwargs.get("model", "gpt-3.5-turbo"),
         )
         return response.choices[0].message.content
-        
+
     async def stream(self, prompt, **kwargs):
         messages = [{"role": "user", "content": prompt}]
         async with self.client.chat.completions.stream(
@@ -502,14 +502,14 @@ class OpenAIAdapter(SDKAdapter):
 class AnthropicAdapter(SDKAdapter):
     def __init__(self, client):
         self.client = client
-        
+
     async def complete(self, prompt, **kwargs):
         response = await self.client.messages.create(
             messages=[{"role": "user", "content": prompt}],
             model=kwargs.get("model", "claude-3-sonnet-20240229"),
         )
         return response.content[0].text
-        
+
     async def stream(self, prompt, **kwargs):
         async with self.client.messages.create.with_streaming_response(
             messages=[{"role": "user", "content": prompt}],

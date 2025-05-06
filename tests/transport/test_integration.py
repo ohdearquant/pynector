@@ -7,8 +7,12 @@ This module contains integration tests for the Transport Abstraction Layer compo
 import pytest
 
 from pynector.transport.errors import ConnectionError
+from pynector.transport.http.factory import HTTPTransportFactory
+from pynector.transport.http.message import HttpMessage
+from pynector.transport.http.transport import HTTPTransport
 from pynector.transport.message.json import JsonMessage
 from pynector.transport.registry import TransportFactoryRegistry
+from tests.transport.http.mock_server import MockHTTPServer
 
 
 # Create a mock transport implementation for testing
@@ -163,3 +167,91 @@ async def test_transport_context_manager_error_handling():
     with pytest.raises(ConnectionError, match="Failed to connect"):
         async with registry.create_transport("error") as _:
             pass  # Should not reach here
+
+
+@pytest.mark.asyncio
+async def test_http_transport_integration():
+    """Test the integration of HTTP transport with the Transport Abstraction Layer."""
+    # Set up registry
+    registry = TransportFactoryRegistry()
+
+    # Set up mock server
+    async with MockHTTPServer() as server:
+        server.add_route("/test", {"data": "test"}, status_code=200)
+
+        # Register HTTP transport factory
+        factory = HTTPTransportFactory(base_url=server.url, message_type=HttpMessage)
+        registry.register("http", factory)
+
+        # Create transport
+        transport = registry.create_transport("http")
+
+        # Verify transport properties
+        assert isinstance(transport, HTTPTransport)
+        assert transport.base_url == server.url
+        assert transport._message_type == HttpMessage
+
+        # Create message
+        message = HttpMessage(method="GET", url="/test")
+
+        # Test async context manager
+        async with transport as t:
+            # Test sending
+            await t.send(message)
+
+            # Test receiving
+            received = [msg async for msg in t.receive()]
+            assert len(received) == 1
+
+            # Verify response
+            payload = received[0].get_payload()
+            assert payload["status_code"] == 200
+            assert "data" in payload["data"]
+
+
+@pytest.mark.asyncio
+async def test_multiple_transport_types():
+    """Test using multiple transport types together."""
+    # Set up registry
+    registry = TransportFactoryRegistry()
+
+    # Register JSON mock transport
+    registry.register("json", MockJsonTransportFactory())
+
+    # Set up mock HTTP server
+    async with MockHTTPServer() as server:
+        server.add_route("/test", {"data": "http-response"}, status_code=200)
+
+        # Register HTTP transport factory
+        factory = HTTPTransportFactory(base_url=server.url, message_type=HttpMessage)
+        registry.register("http", factory)
+
+        # Create messages for JSON transport
+        json_messages = [JsonMessage({"id": "1"}, {"data": "json-response"})]
+
+        # Create transports
+        json_transport = registry.create_transport("json", messages=json_messages)
+        http_transport = registry.create_transport("http")
+
+        # Create HTTP message
+        http_message = HttpMessage(method="GET", url="/test")
+
+        # Use both transports
+        async with json_transport as t1, http_transport as t2:
+            # Send to both
+            await t1.send(JsonMessage({"id": "2"}, {"data": "to-json"}))
+            await t2.send(http_message)
+
+            # Receive from both
+            json_received = [msg async for msg in t1.receive()]
+            http_received = [msg async for msg in t2.receive()]
+
+            # Verify JSON responses
+            assert len(json_received) == 1
+            assert json_received[0].get_payload()["data"] == "json-response"
+
+            # Verify HTTP responses
+            assert len(http_received) == 1
+            payload = http_received[0].get_payload()
+            assert payload["status_code"] == 200
+            assert "data" in payload["data"]

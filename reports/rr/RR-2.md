@@ -525,11 +525,11 @@ async def operation_with_timeout():
 ```python
 async def limited_concurrent_operations(urls):
     limiter = anyio.CapacityLimiter(10)  # Limit to 10 concurrent operations
-    
+
     async def fetch_with_limit(url):
         async with limiter:
             return await fetch(url)
-    
+
     async with anyio.create_task_group() as tg:
         for url in urls:
             await tg.start_soon(fetch_with_limit, url)
