@@ -13,7 +13,7 @@ from pynector.telemetry import HAS_OPENTELEMETRY, HAS_STRUCTLOG
 
 # Import these at module level for patching in tests
 if HAS_OPENTELEMETRY:
-    from opentelemetry import trace
+    from opentelemetry import trace  # noqa: F401
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor

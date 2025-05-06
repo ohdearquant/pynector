@@ -33,7 +33,6 @@ else:
         return {}
 
 
-
 class TracingFacade:
     """Facade for tracing operations."""
 
