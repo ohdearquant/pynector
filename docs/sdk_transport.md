@@ -1,10 +1,10 @@
 # SDK Transport Implementation
 
 The SDK Transport Implementation is a concrete implementation of the Transport
-Abstraction Layer for interacting with AI model provider SDKs, such as OpenAI and
-Anthropic. It provides a unified interface for making requests to these services
-while conforming to the Transport Protocol defined in the Transport Abstraction
-Layer.
+Abstraction Layer for interacting with AI model provider SDKs, such as OpenAI
+and Anthropic. It provides a unified interface for making requests to these
+services while conforming to the Transport Protocol defined in the Transport
+Abstraction Layer.
 
 ## Table of Contents
 
@@ -29,16 +29,19 @@ Layer.
 
 ## Overview
 
-The SDK Transport Implementation provides a complete solution for interacting with
-AI model provider SDKs within the Pynector framework. It follows the Transport
-Protocol defined in the Transport Abstraction Layer, ensuring compatibility with
-the rest of the framework while providing SDK-specific functionality.
+The SDK Transport Implementation provides a complete solution for interacting
+with AI model provider SDKs within the Pynector framework. It follows the
+Transport Protocol defined in the Transport Abstraction Layer, ensuring
+compatibility with the rest of the framework while providing SDK-specific
+functionality.
 
 Key benefits of the SDK Transport Implementation include:
 
-- **Unified interface:** Consistent interface for different AI model provider SDKs
+- **Unified interface:** Consistent interface for different AI model provider
+  SDKs
 - **Adapter pattern:** Separation of transport logic from SDK-specific details
-- **Error translation:** Mapping of SDK-specific errors to the Transport error hierarchy
+- **Error translation:** Mapping of SDK-specific errors to the Transport error
+  hierarchy
 - **Authentication management:** Secure handling of API keys
 - **Streaming support:** Unified streaming interface across different SDKs
 - **Configurability:** Support for SDK-specific configuration options
@@ -47,9 +50,10 @@ Key benefits of the SDK Transport Implementation include:
 
 ### SdkTransport
 
-The `SdkTransport` class is the core component of the SDK Transport Implementation.
-It implements the Transport Protocol and provides methods for connecting,
-disconnecting, sending, and receiving data from AI model provider SDKs.
+The `SdkTransport` class is the core component of the SDK Transport
+Implementation. It implements the Transport Protocol and provides methods for
+connecting, disconnecting, sending, and receiving data from AI model provider
+SDKs.
 
 ```python
 class SdkTransport:
@@ -77,8 +81,8 @@ The `SdkTransport` class provides the following methods:
 ### SDK Adapters
 
 The SDK adapters provide a consistent interface for interacting with different
-AI model provider SDKs. Each SDK has a corresponding adapter class that translates
-between the Transport Protocol and the SDK-specific API.
+AI model provider SDKs. Each SDK has a corresponding adapter class that
+translates between the Transport Protocol and the SDK-specific API.
 
 #### SDKAdapter
 
@@ -123,7 +127,8 @@ class OpenAIAdapter(SDKAdapter):
 
 #### AnthropicAdapter
 
-The `AnthropicAdapter` implements the `SDKAdapter` interface for the Anthropic SDK:
+The `AnthropicAdapter` implements the `SDKAdapter` interface for the Anthropic
+SDK:
 
 ```python
 class AnthropicAdapter(SDKAdapter):
@@ -197,10 +202,10 @@ TransportError
 
 ### Adapter Pattern
 
-The SDK Transport Implementation uses the adapter pattern to provide a consistent
-interface to different SDKs. This pattern allows the transport to work with
-different SDKs without changing its interface, making it easy to add support for
-new SDKs in the future.
+The SDK Transport Implementation uses the adapter pattern to provide a
+consistent interface to different SDKs. This pattern allows the transport to
+work with different SDKs without changing its interface, making it easy to add
+support for new SDKs in the future.
 
 The adapter pattern is implemented through the `SDKAdapter` abstract base class
 and its concrete implementations (`OpenAIAdapter` and `AnthropicAdapter`). Each
@@ -208,9 +213,9 @@ adapter translates between the Transport Protocol and the SDK-specific API.
 
 ### Error Translation
 
-The SDK Transport Implementation includes comprehensive error translation, mapping
-SDK-specific errors to the Transport error hierarchy. This ensures a consistent
-error handling experience regardless of the underlying SDK.
+The SDK Transport Implementation includes comprehensive error translation,
+mapping SDK-specific errors to the Transport error hierarchy. This ensures a
+consistent error handling experience regardless of the underlying SDK.
 
 Error translation is implemented through the `_translate_error` method in the
 `SdkTransport` class. This method examines the error type and maps it to the
@@ -226,10 +231,12 @@ Authentication in the SDK Transport Layer is handled through API keys. These can
 be provided directly or sourced from environment variables.
 
 For OpenAI, the priority for authentication is:
+
 1. API key provided to the constructor
 2. `OPENAI_API_KEY` environment variable
 
 For Anthropic, the priority for authentication is:
+
 1. API key provided to the constructor
 2. `ANTHROPIC_API_KEY` environment variable
 
@@ -244,7 +251,8 @@ regardless of the underlying SDK.
 
 Streaming is implemented through the `stream` method in the SDK adapters and
 exposed through the `receive` method in the `SdkTransport` class. This method
-returns an async iterator that yields chunks of the response as they are received.
+returns an async iterator that yields chunks of the response as they are
+received.
 
 ## Usage Examples
 
@@ -454,3 +462,4 @@ async with transport as t:
     # Receive the response
     async for chunk in t.receive():
         print(chunk.decode("utf-8"), end="")
+```

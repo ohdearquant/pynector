@@ -2,12 +2,11 @@
 Tests for SDK adapter implementations.
 """
 
-import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import AsyncIterator
+from unittest.mock import AsyncMock, MagicMock
 
-from pynector.transport.sdk.adapter import SDKAdapter, OpenAIAdapter, AnthropicAdapter
+import pytest
+
+from pynector.transport.sdk.adapter import AnthropicAdapter, OpenAIAdapter, SDKAdapter
 
 
 # Test the abstract base class
@@ -65,31 +64,31 @@ async def test_openai_adapter_stream():
     """Test OpenAI adapter stream method."""
     # Setup mock
     client = MockOpenAIClient()
-    
+
     # Create a proper async iterator for testing
     class MockAsyncIterator:
         def __init__(self, items):
             self.items = items
-            
+
         def __aiter__(self):
             return self
-            
+
         async def __anext__(self):
             if not self.items:
                 raise StopAsyncIteration
             return self.items.pop(0)
-    
+
     # Create mock items
     mock_items = [
         MagicMock(type="content.delta", delta="Test "),
         MagicMock(type="content.delta", delta="response"),
-        MagicMock(type="not.content.delta", delta="ignored")
+        MagicMock(type="not.content.delta", delta="ignored"),
     ]
-    
+
     # Create a mock context manager
     mock_cm = AsyncMock()
     mock_cm.__aenter__.return_value = MockAsyncIterator(mock_items)
-    
+
     # Make the stream method return our mock context manager
     client.chat.completions.stream = MagicMock(return_value=mock_cm)
 
@@ -142,28 +141,30 @@ async def test_anthropic_adapter_stream():
     """Test Anthropic adapter stream method."""
     # Setup mock
     client = MockAnthropicClient()
-    
+
     # Create a proper async iterator for testing
     class MockTextIterator:
         def __init__(self, items):
             self.items = items.copy()
-            
+
         def __aiter__(self):
             return self
-            
+
         async def __anext__(self):
             if not self.items:
                 raise StopAsyncIteration
             return self.items.pop(0)
-    
+
     # Create a mock response with iter_text method
     mock_response = AsyncMock()
-    mock_response.iter_text = MagicMock(return_value=MockTextIterator(["Test ", "response"]))
-    
+    mock_response.iter_text = MagicMock(
+        return_value=MockTextIterator(["Test ", "response"])
+    )
+
     # Create a mock context manager
     mock_cm = AsyncMock()
     mock_cm.__aenter__.return_value = mock_response
-    
+
     # Make the with_streaming_response method return our mock context manager
     client.messages.create.with_streaming_response = MagicMock(return_value=mock_cm)
 

@@ -280,10 +280,10 @@ async with transport as t:
         url="/users",
         params={"limit": 10},
     )
-    
+
     # Send the message
     await t.send(message)
-    
+
     # Receive the response
     async for response in t.receive():
         data = response.get_payload()["data"]
@@ -321,10 +321,10 @@ async with transport as t:
             "email": "john.doe@example.com",
         },
     )
-    
+
     # Send the message
     await t.send(message)
-    
+
     # Receive the response
     async for response in t.receive():
         data = response.get_payload()["data"]
@@ -355,16 +355,16 @@ async with transport as t:
     # Create a POST request message with file upload
     with open("avatar.png", "rb") as f:
         file_content = f.read()
-    
+
     message = HttpMessage(
         method="POST",
         url="/users/1/avatar",
         files={"avatar": ("avatar.png", file_content, "image/png")},
     )
-    
+
     # Send the message
     await t.send(message)
-    
+
     # Receive the response
     async for response in t.receive():
         data = response.get_payload()["data"]
@@ -401,10 +401,10 @@ async with transport as t:
         method="GET",
         url="/protected-resource",
     )
-    
+
     # Send the message
     await t.send(message)
-    
+
     # Receive the response
     async for response in t.receive():
         data = response.get_payload()["data"]
@@ -443,11 +443,11 @@ try:
             method="GET",
             url="/users/999",  # Non-existent user
         )
-        
+
         try:
             # Send the message
             await t.send(message)
-            
+
             # Receive the response
             async for response in t.receive():
                 data = response.get_payload()["data"]
@@ -488,7 +488,7 @@ async with transport as t:
         method="GET",
         url="/large-file",
     )
-    
+
     # Stream the response
     with open("large-file.dat", "wb") as f:
         async for chunk in t.stream_response(message):
@@ -525,10 +525,10 @@ async with transport as t:
         method="GET",
         url="/flaky-endpoint",  # Endpoint that might fail transiently
     )
-    
+
     # Send the message (will retry up to 5 times with exponential backoff)
     await t.send(message)
-    
+
     # Receive the response
     async for response in t.receive():
         data = response.get_payload()["data"]

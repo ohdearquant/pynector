@@ -5,24 +5,29 @@ This module provides a transport implementation for interacting with AI model pr
 such as OpenAI and Anthropic, following the Transport Protocol.
 """
 
-from typing import AsyncIterator, Dict, Any, Optional, Union, Type
 import os
+from collections.abc import AsyncIterator
+from typing import Any, Optional
+
+import anthropic
 import httpx
 import openai
-import anthropic
-from contextlib import asynccontextmanager
 
 from pynector.transport.errors import (
-    TransportError, ConnectionError, ConnectionTimeoutError,
-    ConnectionRefusedError, MessageError, SerializationError,
-    DeserializationError, TransportSpecificError
+    ConnectionError,
+    ConnectionRefusedError,
+    ConnectionTimeoutError,
 )
+from pynector.transport.sdk.adapter import AnthropicAdapter, OpenAIAdapter
 from pynector.transport.sdk.errors import (
-    SdkTransportError, AuthenticationError, RateLimitError,
-    InvalidRequestError, ResourceNotFoundError, PermissionError,
-    RequestTooLargeError
+    AuthenticationError,
+    InvalidRequestError,
+    PermissionError,
+    RateLimitError,
+    RequestTooLargeError,
+    ResourceNotFoundError,
+    SdkTransportError,
 )
-from pynector.transport.sdk.adapter import SDKAdapter, OpenAIAdapter, AnthropicAdapter
 
 
 class SdkTransport:
@@ -34,7 +39,7 @@ class SdkTransport:
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         timeout: float = 60.0,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         """Initialize the transport with configuration options.
 
@@ -117,7 +122,9 @@ class SdkTransport:
         try:
             prompt = self.config.get("prompt", "Generate a response")
             model = self.config.get("model")
-            kwargs = {k: v for k, v in self.config.items() if k not in ["prompt", "model"]}
+            kwargs = {
+                k: v for k, v in self.config.items() if k not in ["prompt", "model"]
+            }
             async for chunk in self._adapter.stream(prompt, model=model, **kwargs):
                 yield chunk
         except Exception as e:
@@ -137,7 +144,11 @@ class SdkTransport:
                 api_key=self.api_key or os.environ.get("OPENAI_API_KEY"),
                 base_url=self.base_url,
                 timeout=self.timeout,
-                **{k: v for k, v in self.config.items() if k in ["organization", "max_retries"]}
+                **{
+                    k: v
+                    for k, v in self.config.items()
+                    if k in ["organization", "max_retries"]
+                },
             )
         except Exception as e:
             raise ConnectionError(f"Failed to create OpenAI client: {str(e)}")
@@ -156,7 +167,7 @@ class SdkTransport:
                 api_key=self.api_key or os.environ.get("ANTHROPIC_API_KEY"),
                 base_url=self.base_url,
                 timeout=httpx.Timeout(self.timeout),
-                **{k: v for k, v in self.config.items() if k in ["auth_token"]}
+                **{k: v for k, v in self.config.items() if k in ["auth_token"]},
             )
         except Exception as e:
             raise ConnectionError(f"Failed to create Anthropic client: {str(e)}")
@@ -188,7 +199,7 @@ class SdkTransport:
         """
         error_class_name = error.__class__.__name__
         error_module = getattr(error, "__module__", "")
-        
+
         # OpenAI errors
         if error_module.startswith("openai"):
             if error_class_name == "AuthenticationError":
@@ -232,7 +243,7 @@ class SdkTransport:
         # Default case
         return SdkTransportError(f"SDK error: {str(error)}")
 
-    async def __aenter__(self) -> 'SdkTransport':
+    async def __aenter__(self) -> "SdkTransport":
         """Enter the async context, establishing the connection.
 
         Returns:

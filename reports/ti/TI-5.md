@@ -159,7 +159,7 @@ async def test_openai_adapter_stream():
     """Test OpenAI adapter stream method."""
     # Setup mock
     client = MockOpenAIClient()
-    
+
     # Mock the stream context manager
     mock_stream = AsyncMock()
     mock_stream.__aenter__.return_value = mock_stream
@@ -217,7 +217,7 @@ async def test_anthropic_adapter_stream():
     """Test Anthropic adapter stream method."""
     # Setup mock
     client = MockAnthropicClient()
-    
+
     # Mock the stream context manager
     mock_stream = AsyncMock()
     mock_stream.__aenter__.return_value = mock_stream
@@ -329,7 +329,7 @@ async def test_sdk_transport_connect_anthropic():
 async def test_sdk_transport_connect_unsupported():
     """Test SdkTransport connect method with unsupported SDK type."""
     transport = SdkTransport(sdk_type="unsupported")
-    
+
     with pytest.raises(ValueError, match="Unsupported SDK type"):
         await transport.connect()
 
@@ -340,7 +340,7 @@ async def test_sdk_transport_connect_error():
         mock_openai.side_effect = httpx.ConnectError("Connection refused")
 
         transport = SdkTransport(sdk_type="openai")
-        
+
         with pytest.raises(ConnectionRefusedError, match="Connection refused"):
             await transport.connect()
 
@@ -354,12 +354,12 @@ async def test_sdk_transport_disconnect():
 
         transport = SdkTransport(sdk_type="openai")
         await transport.connect()
-        
+
         assert transport._client is not None
         assert transport._adapter is not None
-        
+
         await transport.disconnect()
-        
+
         assert transport._client is None
         assert transport._adapter is None
 
@@ -370,14 +370,14 @@ async def test_sdk_transport_send():
     # Setup mock adapter
     mock_adapter = MagicMock()
     mock_adapter.complete = AsyncMock()
-    
+
     # Create transport with mock adapter
     transport = SdkTransport(sdk_type="openai", model="gpt-4o")
     transport._adapter = mock_adapter
-    
+
     # Test send method
     await transport.send(b"Test prompt")
-    
+
     # Verify adapter was called correctly
     mock_adapter.complete.assert_called_once_with("Test prompt", model="gpt-4o")
 
@@ -385,7 +385,7 @@ async def test_sdk_transport_send():
 async def test_sdk_transport_send_not_connected():
     """Test SdkTransport send method when not connected."""
     transport = SdkTransport()
-    
+
     with pytest.raises(ConnectionError, match="not connected"):
         await transport.send(b"Test prompt")
 
@@ -395,11 +395,11 @@ async def test_sdk_transport_send_error():
     # Setup mock adapter
     mock_adapter = MagicMock()
     mock_adapter.complete = AsyncMock(side_effect=openai.AuthenticationError("Invalid API key"))
-    
+
     # Create transport with mock adapter
     transport = SdkTransport(sdk_type="openai")
     transport._adapter = mock_adapter
-    
+
     # Test send method
     with pytest.raises(AuthenticationError, match="Authentication failed"):
         await transport.send(b"Test prompt")
@@ -414,16 +414,16 @@ async def test_sdk_transport_receive():
         yield b"Test "
         yield b"response"
     mock_adapter.stream = mock_stream
-    
+
     # Create transport with mock adapter
     transport = SdkTransport(sdk_type="openai", prompt="Custom prompt", model="gpt-4o")
     transport._adapter = mock_adapter
-    
+
     # Test receive method
     chunks = []
     async for chunk in transport.receive():
         chunks.append(chunk)
-    
+
     # Verify result
     assert chunks == [b"Test ", b"response"]
 
@@ -431,7 +431,7 @@ async def test_sdk_transport_receive():
 async def test_sdk_transport_receive_not_connected():
     """Test SdkTransport receive method when not connected."""
     transport = SdkTransport()
-    
+
     with pytest.raises(ConnectionError, match="not connected"):
         async for _ in transport.receive():
             pass
@@ -444,11 +444,11 @@ async def test_sdk_transport_receive_error():
     async def mock_stream(*args, **kwargs):
         raise openai.RateLimitError("Rate limit exceeded")
     mock_adapter.stream = mock_stream
-    
+
     # Create transport with mock adapter
     transport = SdkTransport(sdk_type="openai")
     transport._adapter = mock_adapter
-    
+
     # Test receive method
     with pytest.raises(RateLimitError, match="Rate limit exceeded"):
         async for _ in transport.receive():
@@ -458,7 +458,7 @@ async def test_sdk_transport_receive_error():
 def test_sdk_transport_translate_error():
     """Test SdkTransport error translation."""
     transport = SdkTransport()
-    
+
     # Test OpenAI errors
     assert isinstance(transport._translate_error(openai.AuthenticationError("test")), AuthenticationError)
     assert isinstance(transport._translate_error(openai.RateLimitError("test")), RateLimitError)
@@ -466,29 +466,29 @@ def test_sdk_transport_translate_error():
     assert isinstance(transport._translate_error(openai.APIConnectionError("test")), ConnectionError)
     assert isinstance(transport._translate_error(openai.BadRequestError("test")), InvalidRequestError)
     assert isinstance(transport._translate_error(openai.NotFoundError("test")), ResourceNotFoundError)
-    
+
     # Test Anthropic errors
     anthropic_401 = anthropic.APIStatusError("test", response=MagicMock(status_code=401))
     anthropic_401.status_code = 401
     assert isinstance(transport._translate_error(anthropic_401), AuthenticationError)
-    
+
     anthropic_403 = anthropic.APIStatusError("test", response=MagicMock(status_code=403))
     anthropic_403.status_code = 403
     assert isinstance(transport._translate_error(anthropic_403), PermissionError)
-    
+
     anthropic_404 = anthropic.APIStatusError("test", response=MagicMock(status_code=404))
     anthropic_404.status_code = 404
     assert isinstance(transport._translate_error(anthropic_404), ResourceNotFoundError)
-    
+
     anthropic_429 = anthropic.APIStatusError("test", response=MagicMock(status_code=429))
     anthropic_429.status_code = 429
     assert isinstance(transport._translate_error(anthropic_429), RateLimitError)
-    
+
     # Test httpx errors
     assert isinstance(transport._translate_error(httpx.TimeoutException("test")), ConnectionTimeoutError)
     assert isinstance(transport._translate_error(httpx.ConnectError("test")), ConnectionRefusedError)
     assert isinstance(transport._translate_error(httpx.RequestError("test")), ConnectionError)
-    
+
     # Test default case
     assert isinstance(transport._translate_error(Exception("test")), SdkTransportError)
 
@@ -499,12 +499,12 @@ async def test_sdk_transport_context_manager():
     with patch.object(SdkTransport, "connect", AsyncMock()) as mock_connect:
         with patch.object(SdkTransport, "disconnect", AsyncMock()) as mock_disconnect:
             transport = SdkTransport()
-            
+
             async with transport as t:
                 assert t is transport
                 mock_connect.assert_called_once()
                 mock_disconnect.assert_not_called()
-            
+
             mock_disconnect.assert_called_once()
 ```
 
@@ -554,10 +554,10 @@ def test_sdk_transport_factory_create_transport():
             timeout=60.0,
             model="gpt-3.5-turbo"
         )
-        
+
         # Create transport with default settings
         factory.create_transport()
-        
+
         # Verify transport was created with correct settings
         mock_transport.assert_called_once_with(
             sdk_type="openai",
@@ -566,9 +566,9 @@ def test_sdk_transport_factory_create_transport():
             timeout=60.0,
             model="gpt-3.5-turbo"
         )
-        
+
         mock_transport.reset_mock()
-        
+
         # Create transport with custom settings
         factory.create_transport(
             sdk_type="anthropic",
@@ -577,7 +577,7 @@ def test_sdk_transport_factory_create_transport():
             timeout=30.0,
             model="claude-3-opus-20240229"
         )
-        
+
         # Verify transport was created with correct settings
         mock_transport.assert_called_once_with(
             sdk_type="anthropic",
@@ -597,13 +597,13 @@ def test_sdk_transport_factory_create_transport_merge_config():
             temperature=0.7,
             max_tokens=100
         )
-        
+
         # Create transport with partial override
         factory.create_transport(
             model="gpt-4o",
             max_tokens=200
         )
-        
+
         # Verify transport was created with merged config
         call_kwargs = mock_transport.call_args[1]
         assert call_kwargs["sdk_type"] == "openai"
@@ -632,11 +632,11 @@ async def test_sdk_transport_with_registry():
     """Test SdkTransport integration with TransportFactoryRegistry."""
     # Create registry
     registry = TransportFactoryRegistry()
-    
+
     # Register SDK transport factories
     registry.register("openai", SdkTransportFactory(sdk_type="openai"))
     registry.register("anthropic", SdkTransportFactory(sdk_type="anthropic"))
-    
+
     # Create transports using the registry
     with patch("openai.AsyncOpenAI") as mock_openai:
         with patch("anthropic.AsyncAnthropic") as mock_anthropic:
@@ -645,16 +645,16 @@ async def test_sdk_transport_with_registry():
             mock_anthropic_client = MagicMock()
             mock_openai.return_value = mock_openai_client
             mock_anthropic.return_value = mock_anthropic_client
-            
+
             # Create transports
             openai_transport = registry.create_transport("openai", model="gpt-4o")
             anthropic_transport = registry.create_transport("anthropic", model="claude-3-opus-20240229")
-            
+
             # Verify transports were created correctly
             assert isinstance(openai_transport, SdkTransport)
             assert openai_transport.sdk_type == "openai"
             assert openai_transport.config["model"] == "gpt-4o"
-            
+
             assert isinstance(anthropic_transport, SdkTransport)
             assert anthropic_transport.sdk_type == "anthropic"
             assert anthropic_transport.config["model"] == "claude-3-opus-20240229"
@@ -665,28 +665,28 @@ async def test_sdk_transport_end_to_end():
     # Setup mocks
     mock_adapter = MagicMock()
     mock_adapter.complete = AsyncMock(return_value="Test response")
-    
+
     async def mock_stream(*args, **kwargs):
         yield b"Test "
         yield b"response"
     mock_adapter.stream = mock_stream
-    
+
     # Create transport with mock adapter
     transport = SdkTransport(sdk_type="openai", model="gpt-4o")
-    
+
     # Mock connect to set the adapter
     original_connect = transport.connect
     async def mock_connect():
         await original_connect()
         transport._adapter = mock_adapter
     transport.connect = mock_connect
-    
+
     # Test end-to-end flow
     async with transport as t:
         # Test send
         await t.send(b"Test prompt")
         mock_adapter.complete.assert_called_once_with("Test prompt", model="gpt-4o")
-        
+
         # Test receive
         chunks = []
         async for chunk in t.receive():
@@ -702,29 +702,29 @@ async def test_mock_adapter_for_testing():
             if prompt == "error":
                 raise ValueError("Test error")
             return f"Response to: {prompt}"
-        
+
         async def stream(self, prompt, **kwargs):
             if prompt == "error":
                 raise ValueError("Test error")
             words = f"Response to: {prompt}".split()
             for word in words:
                 yield word.encode("utf-8")
-    
+
     # Create transport with mock adapter
     transport = SdkTransport(sdk_type="mock", prompt="Test prompt")
     transport._adapter = MockAdapter()
-    
+
     # Test send
     await transport.send(b"Hello")
     transport._adapter.complete.assert_called_once()
-    
+
     # Test receive
     chunks = []
     async for chunk in transport.receive():
         chunks.append(chunk.decode("utf-8"))
-    
+
     assert "".join(chunks) == "Response to: Test prompt"
-    
+
     # Test error handling
     with pytest.raises(SdkTransportError):
         await transport.send(b"error")
@@ -761,22 +761,22 @@ class MockAdapter(SDKAdapter):
     async def complete(self, prompt: str, model: Optional[str] = None, **kwargs: Any) -> str:
         """Generate a completion for the given prompt."""
         self.complete_calls.append((prompt, model, kwargs))
-        
+
         if prompt in self.errors:
             raise self.errors[prompt]
-        
+
         return self.responses.get(prompt, f"Mock response to: {prompt}")
 
     async def stream(self, prompt: str, model: Optional[str] = None, **kwargs: Any) -> AsyncIterator[bytes]:
         """Stream a completion for the given prompt."""
         self.stream_calls.append((prompt, model, kwargs))
-        
+
         if prompt in self.errors:
             raise self.errors[prompt]
-        
+
         response = self.responses.get(prompt, f"Mock response to: {prompt}")
         chunks = response.split()
-        
+
         for chunk in chunks:
             yield chunk.encode("utf-8")
             await asyncio.sleep(0.01)  # Simulate streaming delay
@@ -799,10 +799,10 @@ def mock_adapter():
 def mock_transport(mock_adapter):
     """Fixture for creating a transport with a mock adapter."""
     from pynector.transport.sdk.transport import SdkTransport
-    
+
     transport = SdkTransport(sdk_type="mock")
     transport._adapter = mock_adapter
-    
+
     return transport
 ```
 

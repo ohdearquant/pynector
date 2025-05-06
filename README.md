@@ -99,8 +99,9 @@ easier to test, maintain, and extend.
 - **Factory Pattern**: Factory method pattern for creating transport instances.
 - **HTTP Transport**: Complete HTTP client implementation using httpx with
   connection pooling, retry mechanism, and comprehensive error handling.
-- **SDK Transport**: Unified interface for interacting with AI model provider SDKs
-  (OpenAI and Anthropic) with adapter pattern, error translation, and streaming support.
+- **SDK Transport**: Unified interface for interacting with AI model provider
+  SDKs (OpenAI and Anthropic) with adapter pattern, error translation, and
+  streaming support.
 
 ### Components
 
@@ -134,9 +135,11 @@ The Transport Abstraction Layer consists of the following components:
    - HTTP-specific error hierarchy for detailed error handling.
 
 8. **SDK Transport Implementation**:
-   - `SdkTransport`: Implements the Transport Protocol for AI model provider SDKs.
+   - `SdkTransport`: Implements the Transport Protocol for AI model provider
+     SDKs.
    - `SDKAdapter`: Abstract base class for SDK-specific adapters.
-   - `OpenAIAdapter` and `AnthropicAdapter`: Concrete adapters for specific SDKs.
+   - `OpenAIAdapter` and `AnthropicAdapter`: Concrete adapters for specific
+     SDKs.
    - `SdkTransportFactory`: Creates and configures SDK transport instances.
    - SDK-specific error hierarchy for detailed error handling.
 

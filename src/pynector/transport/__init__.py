@@ -23,6 +23,9 @@ from pynector.transport.factory import TransportFactory
 from pynector.transport.protocol import Message, Transport
 from pynector.transport.registry import TransportFactoryRegistry
 
+# Import SDK Transport components
+from pynector.transport.sdk import SdkTransport, SdkTransportError, SdkTransportFactory
+
 __all__ = [
     "Transport",
     "Message",
@@ -41,4 +44,3 @@ __all__ = [
     "SdkTransportFactory",
     "SdkTransportError",
 ]
-

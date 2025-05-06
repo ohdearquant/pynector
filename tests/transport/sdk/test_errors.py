@@ -3,16 +3,18 @@ Tests for SDK-specific error classes.
 """
 
 import pytest
+
 from pynector.transport.errors import TransportSpecificError
 from pynector.transport.sdk.errors import (
-    SdkTransportError,
     AuthenticationError,
-    RateLimitError,
     InvalidRequestError,
-    ResourceNotFoundError,
     PermissionError,
-    RequestTooLargeError
+    RateLimitError,
+    RequestTooLargeError,
+    ResourceNotFoundError,
+    SdkTransportError,
 )
+
 
 def test_error_hierarchy():
     """Test that the error hierarchy is correctly implemented."""
@@ -34,6 +36,7 @@ def test_error_hierarchy():
     assert isinstance(auth_error, SdkTransportError)
     assert isinstance(auth_error, TransportSpecificError)
     assert str(auth_error) == "Invalid API key"
+
 
 def test_error_handling():
     """Test error handling in a typical use case."""

@@ -2,11 +2,7 @@
 Tests for the SdkTransportFactory class.
 """
 
-import pytest
-from unittest.mock import patch
-
 from pynector.transport.sdk.factory import SdkTransportFactory
-from pynector.transport.sdk.transport import SdkTransport
 
 
 def test_sdk_transport_factory_init():
@@ -25,7 +21,7 @@ def test_sdk_transport_factory_init():
         api_key="test-key",
         base_url="https://example.com",
         timeout=30.0,
-        model="claude-3-opus-20240229"
+        model="claude-3-opus-20240229",
     )
     assert factory.sdk_type == "anthropic"
     assert factory.api_key == "test-key"
@@ -38,31 +34,28 @@ def test_sdk_transport_factory_create_transport():
     """Test SdkTransportFactory create_transport method."""
     # Create factory
     factory = SdkTransportFactory(
-        sdk_type="openai",
-        api_key="default-key",
-        timeout=60.0,
-        model="gpt-3.5-turbo"
+        sdk_type="openai", api_key="default-key", timeout=60.0, model="gpt-3.5-turbo"
     )
-    
+
     # Create transport with default settings
     transport = factory.create_transport()
-    
+
     # Verify transport was created with correct settings
     assert transport.sdk_type == "openai"
     assert transport.api_key == "default-key"
     assert transport.base_url is None
     assert transport.timeout == 60.0
     assert transport.config == {"model": "gpt-3.5-turbo"}
-    
+
     # Create transport with custom settings
     transport = factory.create_transport(
         sdk_type="anthropic",
         api_key="custom-key",
         base_url="https://example.com",
         timeout=30.0,
-        model="claude-3-opus-20240229"
+        model="claude-3-opus-20240229",
     )
-    
+
     # Verify transport was created with correct settings
     assert transport.sdk_type == "anthropic"
     assert transport.api_key == "custom-key"
@@ -75,18 +68,12 @@ def test_sdk_transport_factory_create_transport_merge_config():
     """Test SdkTransportFactory create_transport method with merged config."""
     # Create factory with default config
     factory = SdkTransportFactory(
-        sdk_type="openai",
-        model="gpt-3.5-turbo",
-        temperature=0.7,
-        max_tokens=100
+        sdk_type="openai", model="gpt-3.5-turbo", temperature=0.7, max_tokens=100
     )
-    
+
     # Create transport with partial override
-    transport = factory.create_transport(
-        model="gpt-4o",
-        max_tokens=200
-    )
-    
+    transport = factory.create_transport(model="gpt-4o", max_tokens=200)
+
     # Verify transport was created with merged config
     assert transport.sdk_type == "openai"
     assert transport.config["model"] == "gpt-4o"  # Overridden
