@@ -4,8 +4,8 @@ Pytest configuration for pynector tests.
 This module contains fixtures and configuration for pytest.
 """
 
-from typing import Any
 from collections.abc import AsyncGenerator
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

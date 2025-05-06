@@ -28,7 +28,7 @@ For more detailed documentation, see the client documentation in the docs/ direc
 """
 
 from types import TracebackType
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Any, Optional, TypeVar
 
 import anyio
 
@@ -50,7 +50,7 @@ class Pynector:
     """
     The core client class for making requests through various transports with support for
     batch processing, timeouts, and optional observability.
-    
+
     Key features:
     - Flexible transport integration (HTTP, SDK, custom)
     - Efficient batch processing with concurrency limits
@@ -58,7 +58,7 @@ class Pynector:
     - Optional telemetry with tracing and logging
     - Proper resource management with async context managers
     - Configuration hierarchy (instance, environment, defaults)
-    
+
     The client can be used as an async context manager (recommended) or with explicit
     resource management using the aclose() method.
     """
@@ -204,14 +204,14 @@ class Pynector:
             TransportError: If there is an error with the transport.
             TimeoutError: If the request times out.
             PynectorError: For other errors.
-            
+
         Example:
             ```python
             # Basic request
             response = await client.request(
                 {"path": "/users", "method": "GET", "params": {"limit": 10}}
             )
-            
+
             # Request with timeout
             try:
                 response = await client.request(
@@ -372,7 +372,7 @@ class Pynector:
         Raises:
             TimeoutError: If the batch times out and raise_on_error is True.
             PynectorError: For other errors if raise_on_error is True.
-            
+
         Example:
             ```python
             # Create a batch of requests
@@ -575,7 +575,7 @@ class Pynector:
             TransportError: If all retry attempts fail
             TimeoutError: If the request times out after all retry attempts
             PynectorError: For other errors
-            
+
         Example:
             ```python
             # Request with retry for transient errors
@@ -641,12 +641,12 @@ class Pynector:
 
     async def aclose(self) -> None:
         """Close the Pynector instance and release resources.
-        
+
         This method disconnects the transport if it is owned by this instance
         (i.e., if it was created by this instance rather than passed in).
         It should be called when the client is no longer needed to ensure
         proper resource cleanup.
-        
+
         Example:
             ```python
             client = Pynector(transport_type="http", base_url="https://api.example.com")
@@ -655,7 +655,7 @@ class Pynector:
             finally:
                 await client.aclose()  # Ensure resources are properly released
             ```
-        
+
         Note:
             When using the client as an async context manager, this method is
             called automatically when exiting the context.
@@ -680,10 +680,10 @@ class Pynector:
 
     async def __aenter__(self) -> "Pynector":
         """Enter the async context.
-        
+
         Initializes and connects the transport if needed. This method is called
         automatically when using the client as an async context manager.
-        
+
         Example:
             ```python
             async with Pynector(transport_type="http", base_url="https://api.example.com") as client:
@@ -691,7 +691,7 @@ class Pynector:
                 response = await client.request({"path": "/users", "method": "GET"})
                 # Transport is automatically disconnected when exiting the context
             ```
-        
+
         Returns:
             The Pynector instance.
         """
@@ -707,11 +707,11 @@ class Pynector:
         exc_tb: Optional[TracebackType],
     ) -> None:
         """Exit the async context.
-        
+
         Disconnects the transport if it is owned by this instance and releases
         resources. This method is called automatically when exiting the async
         context manager.
-        
+
         This ensures proper resource cleanup even if an exception occurs within
         the context.
         """

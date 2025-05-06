@@ -6,7 +6,7 @@ dynamic registration and lookup of transport factories.
 """
 
 import importlib
-from typing import Any, List
+from typing import Any
 
 from pynector.transport.factory import TransportFactory
 from pynector.transport.protocol import Transport
