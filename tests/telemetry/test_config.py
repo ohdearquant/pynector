@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 def test_get_env_bool():
     """Test get_env_bool function."""
-    from src.pynector.telemetry.config import get_env_bool
+    from pynector.telemetry.config import get_env_bool
 
     # Test with environment variable set to true
     with patch.dict(os.environ, {"TEST_BOOL": "true"}):
@@ -45,7 +45,7 @@ def test_get_env_bool():
 
 def test_get_env_dict():
     """Test get_env_dict function."""
-    from src.pynector.telemetry.config import get_env_dict
+    from pynector.telemetry.config import get_env_dict
 
     # Test with environment variable set
     with patch.dict(os.environ, {"TEST_DICT": "key1=value1,key2=value2"}):
@@ -81,10 +81,10 @@ def test_configure_telemetry_no_dependencies():
     """Test configure_telemetry function with no dependencies."""
     # Mock dependencies availability
     with (
-        patch("src.pynector.telemetry.config.HAS_OPENTELEMETRY", False),
-        patch("src.pynector.telemetry.config.HAS_STRUCTLOG", False),
+        patch("pynector.telemetry.config.HAS_OPENTELEMETRY", False),
+        patch("pynector.telemetry.config.HAS_STRUCTLOG", False),
     ):
-        from src.pynector.telemetry.config import configure_telemetry
+        from pynector.telemetry.config import configure_telemetry
 
         assert configure_telemetry() is False
 
@@ -93,8 +93,8 @@ def test_configure_telemetry_with_opentelemetry():
     """Test configure_telemetry function with OpenTelemetry."""
     # Mock dependencies availability
     with (
-        patch("src.pynector.telemetry.config.HAS_OPENTELEMETRY", True),
-        patch("src.pynector.telemetry.config.HAS_STRUCTLOG", False),
+        patch("pynector.telemetry.config.HAS_OPENTELEMETRY", True),
+        patch("pynector.telemetry.config.HAS_STRUCTLOG", False),
     ):
         # Mock OpenTelemetry modules
         mock_resource = MagicMock()
@@ -105,23 +105,21 @@ def test_configure_telemetry_with_opentelemetry():
         mock_configure_exporters = MagicMock()
 
         with (
+            patch("pynector.telemetry.config.Resource.create", mock_resource_create),
             patch(
-                "src.pynector.telemetry.config.Resource.create", mock_resource_create
-            ),
-            patch(
-                "src.pynector.telemetry.config.TracerProvider",
+                "pynector.telemetry.config.TracerProvider",
                 mock_tracer_provider_class,
             ),
             patch(
-                "src.pynector.telemetry.config.trace.set_tracer_provider",
+                "pynector.telemetry.config.trace.set_tracer_provider",
                 mock_set_tracer_provider,
             ),
             patch(
-                "src.pynector.telemetry.config._configure_exporters",
+                "pynector.telemetry.config._configure_exporters",
                 mock_configure_exporters,
             ),
         ):
-            from src.pynector.telemetry.config import configure_telemetry
+            from pynector.telemetry.config import configure_telemetry
 
             # Test with default values
             with patch.dict(os.environ, {}, clear=True):
@@ -184,7 +182,7 @@ def test_configure_telemetry_with_opentelemetry():
             mock_configure_exporters.reset_mock()
 
             with patch(
-                "src.pynector.telemetry.config.Resource.create", side_effect=ImportError
+                "pynector.telemetry.config.Resource.create", side_effect=ImportError
             ):
                 result = configure_telemetry(trace_enabled=True)
 
@@ -196,17 +194,17 @@ def test_configure_telemetry_with_structlog():
     """Test configure_telemetry function with structlog."""
     # Mock dependencies availability
     with (
-        patch("src.pynector.telemetry.config.HAS_OPENTELEMETRY", False),
-        patch("src.pynector.telemetry.config.HAS_STRUCTLOG", True),
+        patch("pynector.telemetry.config.HAS_OPENTELEMETRY", False),
+        patch("pynector.telemetry.config.HAS_STRUCTLOG", True),
     ):
         # Mock structlog module
         mock_configure_structlog = MagicMock()
 
         with patch(
-            "src.pynector.telemetry.config._configure_structlog",
+            "pynector.telemetry.config._configure_structlog",
             mock_configure_structlog,
         ):
-            from src.pynector.telemetry.config import configure_telemetry
+            from pynector.telemetry.config import configure_telemetry
 
             # Test with default values
             mock_configure_structlog.reset_mock()
@@ -246,8 +244,8 @@ def test_configure_telemetry_with_both():
     """Test configure_telemetry function with both OpenTelemetry and structlog."""
     # Mock dependencies availability
     with (
-        patch("src.pynector.telemetry.config.HAS_OPENTELEMETRY", True),
-        patch("src.pynector.telemetry.config.HAS_STRUCTLOG", True),
+        patch("pynector.telemetry.config.HAS_OPENTELEMETRY", True),
+        patch("pynector.telemetry.config.HAS_STRUCTLOG", True),
     ):
         # Mock OpenTelemetry modules
         mock_resource = MagicMock()
@@ -261,27 +259,25 @@ def test_configure_telemetry_with_both():
         mock_configure_structlog = MagicMock()
 
         with (
+            patch("pynector.telemetry.config.Resource.create", mock_resource_create),
             patch(
-                "src.pynector.telemetry.config.Resource.create", mock_resource_create
-            ),
-            patch(
-                "src.pynector.telemetry.config.TracerProvider",
+                "pynector.telemetry.config.TracerProvider",
                 mock_tracer_provider_class,
             ),
             patch(
-                "src.pynector.telemetry.config.trace.set_tracer_provider",
+                "pynector.telemetry.config.trace.set_tracer_provider",
                 mock_set_tracer_provider,
             ),
             patch(
-                "src.pynector.telemetry.config._configure_exporters",
+                "pynector.telemetry.config._configure_exporters",
                 mock_configure_exporters,
             ),
             patch(
-                "src.pynector.telemetry.config._configure_structlog",
+                "pynector.telemetry.config._configure_structlog",
                 mock_configure_structlog,
             ),
         ):
-            from src.pynector.telemetry.config import configure_telemetry
+            from pynector.telemetry.config import configure_telemetry
 
             # Test with default values
             with patch.dict(os.environ, {}, clear=True):
@@ -320,10 +316,10 @@ def test_configure_telemetry_with_both():
 
 def test_configure_exporters_simple():
     """Test _configure_exporters function with simple cases."""
-    from src.pynector.telemetry.config import _configure_exporters
+    from pynector.telemetry.config import _configure_exporters
 
     # Test with OpenTelemetry not available
-    with patch("src.pynector.telemetry.config.HAS_OPENTELEMETRY", False):
+    with patch("pynector.telemetry.config.HAS_OPENTELEMETRY", False):
         mock_tracer_provider = MagicMock()
         _configure_exporters(mock_tracer_provider)
         mock_tracer_provider.add_span_processor.assert_not_called()
@@ -331,19 +327,17 @@ def test_configure_exporters_simple():
 
 def test_configure_structlog_simple():
     """Test _configure_structlog function with simple cases."""
-    from src.pynector.telemetry.config import _configure_structlog
+    from pynector.telemetry.config import _configure_structlog
 
     # Test with structlog not available
-    with patch("src.pynector.telemetry.config.HAS_STRUCTLOG", False):
+    with patch("pynector.telemetry.config.HAS_STRUCTLOG", False):
         _configure_structlog("INFO")
         # No exception should be raised
 
     # Test with structlog available but ImportError
     with (
-        patch("src.pynector.telemetry.config.HAS_STRUCTLOG", True),
-        patch(
-            "src.pynector.telemetry.config.structlog.configure", side_effect=ImportError
-        ),
+        patch("pynector.telemetry.config.HAS_STRUCTLOG", True),
+        patch("pynector.telemetry.config.structlog.configure", side_effect=ImportError),
     ):
         _configure_structlog("INFO")
         # No exception should be raised
@@ -351,11 +345,11 @@ def test_configure_structlog_simple():
 
 def test_dummy_classes():
     """Test the dummy classes defined in the module."""
-    from src.pynector.telemetry.config import HAS_OPENTELEMETRY, HAS_STRUCTLOG
+    from pynector.telemetry.config import HAS_OPENTELEMETRY, HAS_STRUCTLOG
 
     # Test OpenTelemetry dummy classes
     if not HAS_OPENTELEMETRY:
-        from src.pynector.telemetry.config import (
+        from pynector.telemetry.config import (
             BatchSpanProcessor,
             ConsoleSpanExporter,
             OTLPSpanExporter,
@@ -394,7 +388,7 @@ def test_dummy_classes():
 
     # Test structlog dummy classes
     if not HAS_STRUCTLOG:
-        from src.pynector.telemetry.config import structlog
+        from pynector.telemetry.config import structlog
 
         # Test configure
         structlog.configure(processors=["test"])
@@ -423,10 +417,10 @@ def test_dummy_classes():
 
 def test_dummy_logging():
     """Test the dummy logging module."""
-    from src.pynector.telemetry.config import HAS_STRUCTLOG
+    from pynector.telemetry.config import HAS_STRUCTLOG
 
     if not HAS_STRUCTLOG:
-        from src.pynector.telemetry.config import logging
+        from pynector.telemetry.config import logging
 
         # Test logging levels
         assert logging.DEBUG == 10

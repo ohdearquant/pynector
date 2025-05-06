@@ -7,7 +7,7 @@ import pytest
 
 def test_noop_span_init():
     """Test NoOpSpan initialization."""
-    from src.pynector.telemetry.tracing import NoOpSpan
+    from pynector.telemetry.tracing import NoOpSpan
 
     span = NoOpSpan("test_span", {"key": "value"})
 
@@ -22,7 +22,7 @@ def test_noop_span_init():
 
 def test_noop_span_context_manager():
     """Test NoOpSpan as a context manager."""
-    from src.pynector.telemetry.tracing import NoOpSpan
+    from pynector.telemetry.tracing import NoOpSpan
 
     with NoOpSpan("test_span") as span:
         assert isinstance(span, NoOpSpan)
@@ -33,7 +33,7 @@ def test_noop_span_context_manager():
 @pytest.mark.asyncio
 async def test_noop_span_async_context_manager():
     """Test NoOpSpan as an async context manager."""
-    from src.pynector.telemetry.tracing import NoOpSpan
+    from pynector.telemetry.tracing import NoOpSpan
 
     async with NoOpSpan("test_span") as span:
         assert isinstance(span, NoOpSpan)
@@ -43,8 +43,8 @@ async def test_noop_span_async_context_manager():
 
 def test_noop_span_methods():
     """Test NoOpSpan methods."""
-    from src.pynector.telemetry import Status, StatusCode
-    from src.pynector.telemetry.tracing import NoOpSpan
+    from pynector.telemetry import Status, StatusCode
+    from pynector.telemetry.tracing import NoOpSpan
 
     span = NoOpSpan("test_span")
 
@@ -68,7 +68,7 @@ def test_noop_span_methods():
 @pytest.mark.asyncio
 async def test_async_span_wrapper():
     """Test AsyncSpanWrapper."""
-    from src.pynector.telemetry.tracing import AsyncSpanWrapper
+    from pynector.telemetry.tracing import AsyncSpanWrapper
 
     # Create a mock span
     class MockSpan:
@@ -97,7 +97,7 @@ async def test_async_span_wrapper():
 @pytest.mark.asyncio
 async def test_async_span_wrapper_with_token():
     """Test AsyncSpanWrapper with a token."""
-    from src.pynector.telemetry.tracing import AsyncSpanWrapper
+    from pynector.telemetry.tracing import AsyncSpanWrapper
 
     # Create a mock span
     class MockSpan:
@@ -125,7 +125,7 @@ async def test_async_span_wrapper_with_token():
         detach_token = token
 
     # Patch the opentelemetry.context.detach import in AsyncSpanWrapper.__aexit__
-    with patch("src.pynector.telemetry.tracing.detach", mock_detach):
+    with patch("pynector.telemetry.tracing.detach", mock_detach):
         wrapper = AsyncSpanWrapper(mock_span, mock_token)
 
         async with wrapper as span:

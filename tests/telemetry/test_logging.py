@@ -3,7 +3,7 @@
 
 def test_noop_logger_init():
     """Test NoOpLogger initialization."""
-    from src.pynector.telemetry.logging import NoOpLogger
+    from pynector.telemetry.logging import NoOpLogger
 
     logger = NoOpLogger("test_logger")
     assert logger.name == "test_logger"
@@ -15,7 +15,7 @@ def test_noop_logger_init():
 
 def test_noop_logger_methods():
     """Test NoOpLogger methods."""
-    from src.pynector.telemetry.logging import NoOpLogger
+    from pynector.telemetry.logging import NoOpLogger
 
     logger = NoOpLogger("test_logger")
 

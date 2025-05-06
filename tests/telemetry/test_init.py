@@ -23,15 +23,12 @@ def test_opentelemetry_detection_available():
         # Re-import to trigger detection
         import importlib
 
-        with patch.dict(
-            sys.modules, {"pynector.telemetry": None, "src.pynector.telemetry": None}
-        ):
-            from src.pynector import telemetry
+        from pynector import telemetry
 
-            # Ensure the module is available in sys.modules under the correct name
-            sys.modules["pynector.telemetry"] = telemetry
-            importlib.reload(telemetry)
-            assert telemetry.HAS_OPENTELEMETRY is True
+        # Ensure the module is available in sys.modules under the correct name
+        sys.modules["pynector.telemetry"] = telemetry
+        importlib.reload(telemetry)
+        assert telemetry.HAS_OPENTELEMETRY is True
 
 
 def test_opentelemetry_detection_unavailable():
@@ -59,7 +56,7 @@ def test_opentelemetry_detection_unavailable():
         assert telemetry.HAS_OPENTELEMETRY is False
 
         # Verify that StatusCode and Status are defined
-        from src.pynector.telemetry import Status, StatusCode
+        from pynector.telemetry import Status, StatusCode
 
         assert hasattr(StatusCode, "ERROR")
         assert hasattr(StatusCode, "OK")
@@ -73,7 +70,7 @@ def test_opentelemetry_detection_unavailable():
                 del sys.modules[name]
 
             # Verify that StatusCode and Status are defined
-            from src.pynector.telemetry import Status, StatusCode
+            from pynector.telemetry import Status, StatusCode
 
             assert hasattr(StatusCode, "ERROR")
             assert hasattr(StatusCode, "OK")
@@ -96,15 +93,12 @@ def test_structlog_detection_available():
         # Re-import to trigger detection
         import importlib
 
-        with patch.dict(
-            sys.modules, {"pynector.telemetry": None, "src.pynector.telemetry": None}
-        ):
-            from src.pynector import telemetry
+        from src.pynector import telemetry
 
-            # Ensure the module is available in sys.modules under the correct name
-            sys.modules["pynector.telemetry"] = telemetry
-            importlib.reload(telemetry)
-            assert telemetry.HAS_STRUCTLOG is True
+        # Ensure the module is available in sys.modules under the correct name
+        sys.modules["pynector.telemetry"] = telemetry
+        importlib.reload(telemetry)
+        assert telemetry.HAS_STRUCTLOG is True
 
 
 def test_structlog_detection_unavailable():
@@ -114,15 +108,12 @@ def test_structlog_detection_unavailable():
         # Re-import to trigger detection
         import importlib
 
-        with patch.dict(
-            sys.modules, {"pynector.telemetry": None, "src.pynector.telemetry": None}
-        ):
-            from src.pynector import telemetry
+        from src.pynector import telemetry
 
-            # Ensure the module is available in sys.modules under the correct name
-            sys.modules["pynector.telemetry"] = telemetry
-            importlib.reload(telemetry)
-            assert telemetry.HAS_STRUCTLOG is False
+        # Ensure the module is available in sys.modules under the correct name
+        sys.modules["pynector.telemetry"] = telemetry
+        importlib.reload(telemetry)
+        assert telemetry.HAS_STRUCTLOG is False
 
 
 def test_get_telemetry():
