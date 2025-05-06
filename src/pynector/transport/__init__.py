@@ -3,6 +3,10 @@ Transport Abstraction Layer for pynector.
 
 This package provides a flexible, maintainable, and type-safe interface for
 network communication that follows the sans-I/O pattern.
+
+The Transport Abstraction Layer includes implementations for:
+- HTTP Transport: For HTTP communication using httpx
+- SDK Transport: For interacting with AI model provider SDKs (OpenAI and Anthropic)
 """
 
 from pynector.transport.errors import (
@@ -32,4 +36,9 @@ __all__ = [
     "SerializationError",
     "DeserializationError",
     "TransportSpecificError",
+    # SDK Transport
+    "SdkTransport",
+    "SdkTransportFactory",
+    "SdkTransportError",
 ]
+
